@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>ストームエメラルダ シールド戦シミュレーター</title>
+</head>
+<body>
+  <h1>ストームエメラルダ シールド戦シミュレーター</h1>
+
+  <p>15パック開封・1BOX開封・BOX分割に対応予定です。</p>
+
+  <button onclick="openPacks()">15パック開封する</button>
+
+  <h2>開封結果</h2>
+  <div id="result"></div>
+
+  <script>
+    function openPacks() {
+      document.getElementById("result").innerHTML =
+        "<p>ここに開封結果を表示します。まずは動作確認OK！</p>";
+    }
+  </script>
+</body>
+</html>
