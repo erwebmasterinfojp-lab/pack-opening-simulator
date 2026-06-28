@@ -23,12 +23,16 @@ TYPE_CLASS_MAP = {
     "icon-fire": "炎",
     "icon-water": "水",
     "icon-lightning": "雷",
+    "icon-electric": "雷",
     "icon-psychic": "超",
     "icon-fighting": "闘",
     "icon-darkness": "悪",
+    "icon-dark": "悪",
     "icon-metal": "鋼",
+    "icon-steel": "鋼",
     "icon-dragon": "ドラゴン",
     "icon-colorless": "無色",
+    "icon-none": "無色"
 }
 
 
@@ -59,6 +63,47 @@ def normalize_text(text):
     text = text.replace("\xa0", " ")
     return re.sub(r"\s+", " ", text).strip()
 
+def extract_card_area(soup):
+    """
+    カード詳細ページ全体のうち、カード本体情報が入っていそうな範囲を返す。
+
+    公式ページには、検索UI・関連表示・ナビゲーションなどにも
+    タイプ名やグッズ等の文字列が出る可能性がある。
+    そのため、h1から親方向にたどり、カード番号 001 / 081 のような
+    表記を含む最小の親要素をカード本体エリアとして扱う。
+    """
+    h1 = soup.find("h1")
+
+    if not h1:
+        return soup
+
+    for parent in h1.parents:
+        parent_text = normalize_text(parent.get_text(" "))
+
+        if re.search(r"\d{3}\s*/\s*\d{3}", parent_text):
+            return parent
+
+    return h1.parent or soup
+
+
+def find_type_icons_in_html(html):
+    """
+    HTML断片の中からタイプアイコンclassを探す。
+    戻り値は [(出現位置, タイプ名), ...]
+    """
+    results = []
+
+    for class_name, type_name in TYPE_CLASS_MAP.items():
+        pattern = (
+            r'class=["\'][^"\']*'
+            + re.escape(class_name)
+            + r'[^"\']*["\']'
+        )
+
+        for match in re.finditer(pattern, html):
+            results.append((match.start(), type_name))
+
+    return sorted(results, key=lambda item: item[0])
 
 def get_raw_file_path(card_id):
     return RAW_DIR / f"{card_id}.html"
@@ -145,18 +190,132 @@ def extract_evolution_stage(text):
         return "2進化"
     return None
 
+def type_name_from_tag(tag):
+    """
+    span class="icon-none icon" のようなタグからタイプ名を取得する。
+    """
+    class_values = tag.get("class", [])
 
-def extract_pokemon_type(html):
-    for class_name, type_name in TYPE_CLASS_MAP.items():
-        if class_name in html:
-            return type_name
+    for class_name in class_values:
+        if class_name in TYPE_CLASS_MAP:
+            return TYPE_CLASS_MAP[class_name]
+
     return None
 
 
-def extract_trainer_type(text):
-    for keyword, trainer_type in TRAINER_TYPES.items():
-        if keyword in text:
-            return trainer_type
+def is_near_same_area(base_tag, target_tag):
+    """
+    hp-type の直後にあるタイプアイコンかどうかをざっくり判定する。
+
+    弱点・抵抗力テーブル側のアイコンまで find_next で飛んだ場合に
+    誤って拾わないようにするための保険。
+    """
+    base_parent = base_tag.parent
+    target_parent = target_tag.parent
+
+    if base_parent is None or target_parent is None:
+        return False
+
+    return base_parent == target_parent
+
+
+def extract_pokemon_type(card_area):
+    """
+    ポケモンタイプを取得する。
+
+    公式HTMLでは、カード本体タイプは以下のように TopInfo 内に出る。
+
+    <span class="hp-type">タイプ</span>
+    <span class="icon-none icon"></span>
+
+    一方で、弱点・抵抗力・にげるにも icon-electric / icon-fighting / icon-none 等が出る。
+    そのため、HTML全体やRightBox全体から最初のアイコンを拾うと誤判定する。
+
+    優先順位：
+    1. .TopInfo .td-r 内のタイプアイコン
+    2. .hp-type の直後付近のタイプアイコン
+    3. フォールバックとしてカードエリア内のアイコン
+    """
+
+    # 1. TopInfoのタイプ欄を最優先で見る
+    top_info = card_area.select_one(".TopInfo .td-r")
+
+    if top_info:
+        icons = top_info.find_all("span", class_="icon")
+
+        for icon in icons:
+            type_name = type_name_from_tag(icon)
+            if type_name:
+                return type_name
+
+    # 2. hp-type「タイプ」の直後にあるアイコンを探す
+    hp_type = card_area.find("span", class_="hp-type")
+
+    if hp_type:
+        next_icon = hp_type.find_next("span", class_="icon")
+
+        # 弱点テーブル側まで飛ぶのを避けるため、親要素が近いものだけ採用
+        if next_icon and is_near_same_area(hp_type, next_icon):
+            type_name = type_name_from_tag(next_icon)
+            if type_name:
+                return type_name
+
+    # 3. フォールバック：カードエリア内のTopInfoだけを再確認
+    top_info = card_area.select_one(".TopInfo")
+
+    if top_info:
+        for icon in top_info.find_all("span", class_="icon"):
+            type_name = type_name_from_tag(icon)
+            if type_name:
+                return type_name
+
+    return None
+
+def extract_trainer_type(card_area):
+    """
+    トレーナーズ種別を取得する。
+
+    以前の実装ではページ全体のテキストに「グッズ」が含まれるだけで
+    trainer扱いにしていたため、ポケモンカードがグッズ判定されることがあった。
+
+    この実装では、カード本体エリア内の見出し・短いラベルだけを対象にする。
+    """
+    trainer_types = [
+        ("スタジアム", "スタジアム"),
+        ("ポケモンのどうぐ", "どうぐ"),
+        ("どうぐ", "どうぐ"),
+        ("サポート", "サポート"),
+        ("グッズ", "グッズ"),
+    ]
+
+    # 見出し・ラベル系タグを優先
+    target_tags = card_area.find_all(
+        ["h2", "h3", "h4", "dt", "dd", "span", "p", "div"]
+    )
+
+    for tag in target_tags:
+        tag_text = normalize_text(tag.get_text(" "))
+
+        # 長文に含まれる「グッズ」等は誤判定の原因なので除外
+        if len(tag_text) > 20:
+            continue
+
+        for keyword, trainer_type in trainer_types:
+            if tag_text == keyword:
+                return trainer_type
+
+    # フォールバック：
+    # かなり短いテキスト内にだけ含まれる場合は採用
+    for tag in target_tags:
+        tag_text = normalize_text(tag.get_text(" "))
+
+        if len(tag_text) > 20:
+            continue
+
+        for keyword, trainer_type in trainer_types:
+            if keyword in tag_text:
+                return trainer_type
+
     return None
 
 def extract_rarity(soup, html, text):
@@ -254,12 +413,18 @@ def extract_rarity(soup, html, text):
 
     return None
 
-def detect_category(text):
-    trainer_type = extract_trainer_type(text)
+def detect_category(card_area, text):
+    """
+    カード分類を判定する。
+
+    trainer判定は、カード本体エリア内の明確なトレーナーズ種別に限定する。
+    """
+    trainer_type = extract_trainer_type(card_area)
 
     if trainer_type:
         return "trainer"
 
+    # ポケモンカードはHPやワザ、進化区分を持つ
     if (
         "HP" in text
         or "ワザ" in text
@@ -274,7 +439,8 @@ def detect_category(text):
 
 def parse_card(card_id, html, regu):
     soup = BeautifulSoup(html, "html.parser")
-    text = normalize_text(soup.get_text(" "))
+    card_area = extract_card_area(soup)
+    text = normalize_text(card_area.get_text(" "))
 
     name = extract_name(soup)
     set_code = extract_set_code(soup, html)
@@ -283,8 +449,8 @@ def parse_card(card_id, html, regu):
     if not name or not set_code or not card_no:
         return None
 
-    category = detect_category(text)
-    trainer_type = extract_trainer_type(text)
+    category = detect_category(card_area, text)
+    trainer_type = extract_trainer_type(card_area)
     rarity = extract_rarity(soup, html, text)
     source_url = BASE_URL.format(card_id=card_id, regu=regu)
 
@@ -296,7 +462,7 @@ def parse_card(card_id, html, regu):
         "name": name,
         "rarity": rarity,
         "category": category,
-        "pokemonType": extract_pokemon_type(html) if category == "pokemon" else None,
+        "pokemonType": extract_pokemon_type(card_area) if category == "pokemon" else None,
         "trainerType": trainer_type if category == "trainer" else None,
         "evolutionStage": extract_evolution_stage(text) if category == "pokemon" else None,
         "hp": extract_hp(text),

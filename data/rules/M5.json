@@ -1,0 +1,107 @@
+{
+  "setCode": "M5",
+  "displayName": "M5 アビスアイ",
+  "cardsPerPack": 5,
+  "packsPerBox": 30,
+
+  "baseSlots": [
+    {
+      "name": "commonSlot",
+      "description": "C枠",
+      "rarityGroup": "C",
+      "count": 3
+    },
+    {
+      "name": "uncommonSlot",
+      "description": "U枠",
+      "rarityGroup": "U",
+      "count": 1
+    }
+  ],
+
+  "boxRules": {
+    "enabled": true,
+
+    "variableSlot": {
+      "description": "各パック5枚目の枠。BOX全体の封入枚数を先に決めてから30パックへ分配する。"
+    },
+
+    "boxHit": {
+      "description": "1BOXに1枚程度の当たり枠。2枚箱の場合は2枚。",
+      "countDistribution": [
+        {
+          "count": 1,
+          "weight": 95
+        },
+        {
+          "count": 2,
+          "weight": 5
+        }
+      ],
+      "weightedRarities": [
+        {
+          "rarity": "SR",
+          "weight": 79
+        },
+        {
+          "rarity": "SAR",
+          "weight": 13
+        },
+        {
+          "rarity": "UR",
+          "weight": 7
+        },
+        {
+          "rarity": "MUR",
+          "weight": 1
+        }
+      ],
+      "extraHitRCountAdjustment": -1
+    },
+
+    "fixedBoxInclusions": [
+      {
+        "enabled": true,
+        "description": "MEGAシリーズ想定：グッズSRを1BOXに1枚確定。ただし対象カードが存在しない場合はスキップ。",
+        "rarity": "SR",
+        "category": "trainer",
+        "trainerType": "グッズ",
+        "count": 1,
+        "countsAsBoxHit": true
+      }
+    ],
+
+    "boxRarityCounts": [
+      {
+        "rarity": "AR",
+        "count": 3
+      },
+      {
+        "rarity": "RR",
+        "countDistribution": [
+          {
+            "count": 4,
+            "weight": 80
+          },
+          {
+            "count": 5,
+            "weight": 20
+          }
+        ]
+      },
+      {
+        "rarity": "R",
+        "count": 8
+      }
+    ],
+
+    "fillRarityGroup": "U"
+  },
+
+  "notes": [
+    "封入率は参考情報とユーザー仮説をもとにした推定設定。",
+    "SAR、MURなど公式カード検索にないカードは、data/cards/M5.jsonへ手動追加して対応する。",
+    "2枚箱の場合、extraHitRCountAdjustment=-1 によりR枠を1枚減らす。",
+    "MEGAシリーズのグッズSR確定枠は fixedBoxInclusions で表現する。"
+  ]
+}

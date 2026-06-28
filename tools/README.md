@@ -5,9 +5,6 @@
 取得対象のカードID範囲を指定し、その範囲内のカード詳細ページを順番に取得します。
 取得したHTMLは `data/raw/` に保存され、パース結果は `data/cards/{setCode}.json` に出力されます。
 
-実行例：
-py C:\Users\tsuma\git\pack-opening-simulator\tools\fetch-card-master.py --start 50220 --end 50320 --set M5
-
 ## 取得元URL
 
 カード詳細ページは以下の形式です。
@@ -190,6 +187,7 @@ data/cards/M5.json
 | `cardNo`         | `001`          | カード番号。                                         |
 | `cardNoTotal`    | `081`          | そのセット内の通常カード総数。                                |
 | `name`           | `トロピウス`        | カード名。                                          |
+| `rarity`           | `U`        | カードレアリティ。                                          |
 | `category`       | `pokemon`      | カード分類。`pokemon` / `trainer` / `unknown` のいずれか。 |
 | `pokemonType`    | `草`            | ポケモンのタイプ。ポケモン以外では `null`。                      |
 | `trainerType`    | `グッズ`          | トレーナーズの分類。グッズ、どうぐ、サポート、スタジアムなど。                |
@@ -217,17 +215,17 @@ py tools/fetch_card_master.py --start 50220 --end 50320 --set M5
 ### 範囲を広げてM5を取得する
 
 ```powershell
-py tools/fetch_card_master.py --start 50220 --end 50380 --set M5
+C:\Users\tsuma\git\pack-opening-simulator\tools\fetch-card-master.py --start 50220 --end 50380 --set M5
 ```
 
-### キャッシュを使わずに再取得する
+### キャッシュ(取込済みHTML)を使わずに再取得する
 
 ```powershell
-py tools/fetch_card_master.py --start 50220 --end 50320 --set M5 --no-cache
+C:\Users\tsuma\git\pack-opening-simulator\tools\fetch-card-master.py --start 50220 --end 50320 --set M5 --no-cache
 ```
 
 ### アクセス間隔を1秒にする
 
 ```powershell
-py tools/fetch_card_master.py --start 50220 --end 50320 --set M5 --sleep 1.0
+C:\Users\tsuma\git\pack-opening-simulator\tools\fetch-card-master.py --start 50220 --end 50320 --set M5 --sleep 1.0
 ```
