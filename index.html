@@ -9,16 +9,152 @@
 
   <p>15パック開封・1BOX開封・BOX分割に対応予定です。</p>
 
-  <button onclick="openPacks()">15パック開封する</button>
+  <button onclick="openPacks(15)">15パック開封する</button>
+  <button onclick="openPacks(30)">1BOX開封する</button>
 
+  <div id="summary"></div>
   <h2>開封結果</h2>
   <div id="result"></div>
 
-  <script>
-    function openPacks() {
-      document.getElementById("result").innerHTML =
-        "<p>ここに開封結果を表示します。まずは動作確認OK！</p>";
+<script>
+  const cardMaster = {
+    C: [
+      { name: "ピカチュウ", category: "pokemon" },
+      { name: "ニャオハ", category: "pokemon" },
+      { name: "ホゲータ", category: "pokemon" },
+      { name: "クワッス", category: "pokemon" }
+    ],
+    U: [
+      { name: "モンスターボール", category: "trainer" },
+      { name: "博士の研究", category: "trainer" },
+      { name: "ふしぎなアメ", category: "trainer" }
+    ],
+    R: [
+      { name: "ルカリオ", category: "pokemon" },
+      { name: "ゲンガー", category: "pokemon" },
+      { name: "カビゴン", category: "pokemon" }
+    ],
+    RR: [
+      { name: "ミュウツーex", category: "pokemon" },
+      { name: "リザードンex", category: "pokemon" }
+    ],
+    SR: [
+      { name: "ナンジャモSR", category: "trainer" },
+      { name: "博士の研究SR", category: "trainer" }
+    ]
+  };
+
+  function pickRandom(cards) {
+    const randomIndex = Math.floor(Math.random() * cards.length);
+    return cards[randomIndex];
+  }
+
+  function createCard(card, rarity) {
+  return {
+    name: card.name,
+    rarity: rarity,
+    category: card.category,
+    displayName: `${card.name} ${rarity}`
+  };
+}
+
+  function pickRareCard() {
+    const rand = Math.random();
+
+    if (rand < 0.03) {
+      return createCard(pickRandom(cardMaster.SR), "SR");
+    } else if (rand < 0.18) {
+      return createCard(pickRandom(cardMaster.RR), "RR");
+    } else {
+      return createCard(pickRandom(cardMaster.R), "R");
     }
-  </script>
+  }
+
+  function openPacks(packCount) {
+    const result = [];
+
+    for (let i = 1; i <= packCount; i++) {
+      const pack = [];
+
+    for (let j = 0; j < 3; j++) {
+      pack.push(createCard(pickRandom(cardMaster.C), "C"));
+    }
+
+    pack.push(createCard(pickRandom(cardMaster.U), "U"));
+    pack.push(pickRareCard());
+
+      result.push({
+        packNo: i,
+        cards: pack
+      });
+    }
+
+    displaySummary(result);
+    displayResult(result);
+  }
+
+  function displaySummary(packs) {
+    const summary = {
+      pokemon: {},
+      trainer: {},
+      energy: {}
+    };
+
+    packs.forEach(pack => {
+      pack.cards.forEach(card => {
+        const category = card.category;
+
+        if (!summary[category][card.displayName]) {
+          summary[category][card.displayName] = 0;
+        }
+
+        summary[category][card.displayName]++;
+      });
+    });
+
+    const summaryDiv = document.getElementById("summary");
+
+    summaryDiv.innerHTML = `
+      <h2>カード別集計</h2>
+
+      <h3>ポケモン</h3>
+      <ul>${createSummaryList(summary.pokemon)}</ul>
+
+      <h3>トレーナーズ</h3>
+      <ul>${createSummaryList(summary.trainer)}</ul>
+
+      <h3>エネルギー系</h3>
+      <ul>${createSummaryList(summary.energy)}</ul>
+    `;
+  }
+
+  function createSummaryList(cards) {
+    const entries = Object.entries(cards);
+
+    if (entries.length === 0) {
+      return "<li>なし</li>";
+    }
+
+    return entries
+      .sort((a, b) => b[1] - a[1])
+      .map(([card, count]) => `<li>${card}：${count}枚</li>`)
+      .join("");
+  }
+
+  function displayResult(packs) {
+    const resultDiv = document.getElementById("result");
+
+    resultDiv.innerHTML = packs.map(pack => {
+      return `
+        <div>
+          <h3>${pack.packNo}パック目</h3>
+          <ul>
+            ${pack.cards.map(card => `<li>${card.displayName}</li>`).join("")}
+          </ul>
+        </div>
+      `;
+    }).join("");
+  }
+</script>
 </body>
 </html>
