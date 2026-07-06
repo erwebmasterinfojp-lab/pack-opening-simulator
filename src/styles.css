@@ -202,14 +202,7 @@ h1 {
 }
 
 .set-card__code {
-  display: inline-flex;
-  margin-bottom: 6px;
-  padding: 4px 10px;
-  color: #ffffff;
-  background: var(--primary);
-  border-radius: 999px;
-  font-size: 0.8rem;
-  font-weight: 800;
+  display: none;
 }
 
 .set-card__body h3 {
