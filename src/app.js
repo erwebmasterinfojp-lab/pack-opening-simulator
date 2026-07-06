@@ -88,6 +88,11 @@ const resultDiv = document.getElementById("result");
 const open15Button = document.getElementById("open-15-packs");
 const open30Button = document.getElementById("open-30-packs");
 
+const cardModal = document.getElementById("card-modal");
+const cardModalImage = document.getElementById("card-modal-image");
+const cardModalCaption = document.getElementById("card-modal-caption");
+const cardModalClose = document.getElementById("card-modal-close");
+
 init();
 
 async function init() {
@@ -483,14 +488,22 @@ function displayPacks(packs) {
 function renderCardTile(card, count) {
   const cardNo = formatCardNo(card);
   const imageUrl = getCardImageUrl(card);
+  const label = `${cardNo} ${card.name} ${card.rarity || ""}`.trim();
 
   return `
-    <article class="card-tile image-only-card">
+    <article
+      class="card-tile image-only-card"
+      data-card-image-url="${escapeHtml(imageUrl)}"
+      data-card-label="${escapeHtml(label)}"
+      tabindex="0"
+      role="button"
+      aria-label="${escapeHtml(label)}を拡大表示"
+    >
       <div class="card-tile__image">
         <img
           src="${escapeHtml(imageUrl)}"
           alt="${escapeHtml(card.name)}"
-          title="${escapeHtml(cardNo)} ${escapeHtml(card.name)} ${escapeHtml(card.rarity || "")}"
+          title="${escapeHtml(label)}"
           loading="lazy"
           onerror="this.parentElement.classList.add('is-error')"
         />
@@ -507,6 +520,60 @@ function renderCardTile(card, count) {
       </div>
     </article>
   `;
+}
+
+function openCardModalFromTile(tile) {
+  const imageUrl = tile.dataset.cardImageUrl;
+  const label = tile.dataset.cardLabel || "";
+
+  if (!imageUrl) {
+    return;
+  }
+
+  cardModalImage.src = imageUrl;
+  cardModalImage.alt = label;
+  cardModalCaption.textContent = label;
+
+  cardModal.classList.remove("hidden");
+  cardModal.setAttribute("aria-hidden", "false");
+
+  document.body.classList.add("modal-open");
+}
+
+function closeCardModal() {
+  cardModal.classList.add("hidden");
+  cardModal.setAttribute("aria-hidden", "true");
+
+  cardModalImage.src = "";
+  cardModalImage.alt = "";
+  cardModalCaption.textContent = "";
+
+  document.body.classList.remove("modal-open");
+}
+
+function handleCardTileClick(event) {
+  const tile = event.target.closest(".card-tile.image-only-card");
+
+  if (!tile) {
+    return;
+  }
+
+  openCardModalFromTile(tile);
+}
+
+function handleCardTileKeydown(event) {
+  if (event.key !== "Enter" && event.key !== " ") {
+    return;
+  }
+
+  const tile = event.target.closest(".card-tile.image-only-card");
+
+  if (!tile) {
+    return;
+  }
+
+  event.preventDefault();
+  openCardModalFromTile(tile);
 }
 
 function getCardImageUrl(card) {
@@ -556,3 +623,26 @@ function escapeHtml(value) {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 }
+
+summaryDiv.addEventListener("click", handleCardTileClick);
+resultDiv.addEventListener("click", handleCardTileClick);
+
+summaryDiv.addEventListener("keydown", handleCardTileKeydown);
+resultDiv.addEventListener("keydown", handleCardTileKeydown);
+
+cardModalClose.addEventListener("click", closeCardModal);
+
+cardModal.addEventListener("click", event => {
+  if (
+    event.target.classList.contains("card-modal") ||
+    event.target.classList.contains("card-modal__backdrop")
+  ) {
+    closeCardModal();
+  }
+});
+
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape" && !cardModal.classList.contains("hidden")) {
+    closeCardModal();
+  }
+});
