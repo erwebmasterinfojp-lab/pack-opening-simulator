@@ -5,8 +5,7 @@ import {
   createBoxSummary
 } from "./simulator.js";
 
-const CARD_MASTER_PATH = "./data/cards/M5.json";
-const PACK_RULE_PATH = "./data/rules/M5.json";
+const SET_INDEX_PATH = "./data/sets/index.json";
 
 const PLACEHOLDER_CARD_IMAGE_PATH =
   "data:image/svg+xml;utf8," +
@@ -20,10 +19,62 @@ const PLACEHOLDER_CARD_IMAGE_PATH =
     </svg>
   `);
 
+const RARITY_FILTER_ORDER = [
+  "C",
+  "U",
+  "R",
+  "RR",
+  "AR",
+  "SR",
+  "SAR",
+  "UR",
+  "MUR",
+  "BWR",
+  "MA",
+  "SSR",
+  "MM",
+  "ACE",
+  "HR",
+  "不明"
+];
+
+const POKEMON_TYPE_ORDER = [
+  "草",
+  "炎",
+  "水",
+  "雷",
+  "超",
+  "闘",
+  "悪",
+  "鋼",
+  "ドラゴン",
+  "無色"
+];
+
+const TRAINER_TYPE_ORDER = [
+  "グッズ",
+  "どうぐ",
+  "サポート",
+  "スタジアム"
+];
+
+let sets = [];
+let selectedSet = null;
 let cards = [];
 let packRule = null;
+let currentPacks = [];
 
+const activeRarityFilters = new Set();
+const activeKindFilters = new Set();
+
+const setListDiv = document.getElementById("set-list");
 const statusDiv = document.getElementById("status");
+
+const filterPanel = document.getElementById("filter-panel");
+const rarityFilterButtonsDiv = document.getElementById("rarity-filter-buttons");
+const pokemonTypeFilterButtonsDiv = document.getElementById("pokemon-type-filter-buttons");
+const trainerTypeFilterButtonsDiv = document.getElementById("trainer-type-filter-buttons");
+const otherFilterButtonsDiv = document.getElementById("other-filter-buttons");
 
 const boxSummaryPanel = document.getElementById("box-summary-panel");
 const boxSummaryDiv = document.getElementById("box-summary");
@@ -41,58 +92,335 @@ init();
 
 async function init() {
   try {
-    setStatus("カードマスター・封入ルール読み込み中...");
+    setStatus("パックシリーズ読み込み中...");
 
-    const [cardResponse, ruleResponse] = await Promise.all([
-      fetch(CARD_MASTER_PATH),
-      fetch(PACK_RULE_PATH)
-    ]);
+    const response = await fetch(SET_INDEX_PATH);
 
+    if (!response.ok) {
+      throw new Error(`パックシリーズ一覧を読み込めませんでした: ${response.status}`);
+    }
+
+    sets = await response.json();
+
+    if (!Array.isArray(sets) || sets.length === 0) {
+      throw new Error("パックシリーズが登録されていません。");
+    }
+
+    renderSetList();
+
+    await selectSet(sets[0].setCode);
+  } catch (error) {
+    console.error(error);
+    setStatus(`読み込みに失敗しました：${error.message}`, "error");
+  }
+}
+
+function renderSetList() {
+  setListDiv.innerHTML = sets.map(set => {
+    const isActive = selectedSet?.setCode === set.setCode;
+    const imageUrl = set.thumbnailPath || PLACEHOLDER_CARD_IMAGE_PATH;
+
+    return `
+      <button
+        type="button"
+        class="set-card-button ${isActive ? "is-active" : ""}"
+        data-set-code="${escapeHtml(set.setCode)}"
+      >
+        <div class="set-card__image">
+          <img
+            src="${escapeHtml(imageUrl)}"
+            alt="${escapeHtml(set.displayName)}"
+            onerror="this.parentElement.classList.add('is-error')"
+          />
+          <div class="card-tile__fallback">
+            ${escapeHtml(set.displayName)}
+          </div>
+        </div>
+
+        <div class="set-card__body">
+          <p class="set-card__code">${escapeHtml(set.setCode)}</p>
+          <h3>${escapeHtml(set.displayName)}</h3>
+          <p>${escapeHtml(set.description || "")}</p>
+        </div>
+      </button>
+    `;
+  }).join("");
+
+  setListDiv.querySelectorAll("button").forEach(button => {
+    button.addEventListener("click", () => {
+      selectSet(button.dataset.setCode);
+    });
+  });
+}
+
+async function selectSet(setCode) {
+  const nextSet = sets.find(set => set.setCode === setCode);
+
+  if (!nextSet) {
+    setStatus(`パックシリーズが見つかりません：${setCode}`, "error");
+    return;
+  }
+
+  selectedSet = nextSet;
+  renderSetList();
+
+  resetOpeningState();
+  disableOpenButtons();
+
+  try {
+    setStatus(`${nextSet.displayName} のカードマスター・封入ルール読み込み中...`);
+
+    const cardResponse = await fetch(nextSet.cardMasterPath);
     if (!cardResponse.ok) {
       throw new Error(`カードマスターを読み込めませんでした: ${cardResponse.status}`);
     }
 
+    const ruleResponse = await fetch(nextSet.rulePath);
     if (!ruleResponse.ok) {
       throw new Error(`封入ルールを読み込めませんでした: ${ruleResponse.status}`);
     }
 
     const rawCards = await cardResponse.json();
-    packRule = await ruleResponse.json();
+    const rawRule = await ruleResponse.json();
 
     cards = normalizeCards(rawCards);
+    packRule = rawRule;
 
-    setStatus(
-      `読み込み完了：${cards.length}枚 / ${packRule.displayName || packRule.setCode}`,
-      "success"
-    );
+    clearFilters();
+    renderFilterButtons();
 
-    open15Button.disabled = false;
-    open30Button.disabled = false;
+    enableOpenButtons();
 
-    open15Button.addEventListener("click", () => handleOpenPacks(15));
-    open30Button.addEventListener("click", () => handleOpenPacks(30));
+    open15Button.onclick = () => handleOpenPacks(15);
+    open30Button.onclick = () => handleOpenPacks(30);
+
+    // 読み込み成功時はステータス欄を完全に消す
+    hideStatus();
   } catch (error) {
     console.error(error);
-
-    setStatus(
-      `読み込みに失敗しました：${error.message}`,
-      "error"
-    );
+    setStatus(`${nextSet.displayName} の読み込みに失敗しました：${error.message}`, "error");
   }
 }
 
+function resetOpeningState() {
+  currentPacks = [];
+  cards = [];
+  packRule = null;
+
+  activeRarityFilters.clear();
+  activeKindFilters.clear();
+
+  filterPanel.classList.add("hidden");
+  boxSummaryPanel.classList.add("hidden");
+  summaryPanel.classList.add("hidden");
+  resultPanel.classList.add("hidden");
+
+  boxSummaryDiv.innerHTML = "";
+  summaryDiv.innerHTML = "";
+  resultDiv.innerHTML = "";
+}
+
+function disableOpenButtons() {
+  open15Button.disabled = true;
+  open30Button.disabled = true;
+}
+
+function enableOpenButtons() {
+  open15Button.disabled = false;
+  open30Button.disabled = false;
+}
+
 function handleOpenPacks(packCount) {
-  const packs = openPacks(cards, packCount, packRule);
-  const summary = createCardSummary(packs);
-  const boxSummary = createBoxSummary(packs);
+  currentPacks = openPacks(cards, packCount, packRule);
 
-  displayBoxSummary(boxSummary);
-  displaySummary(summary);
-  displayPacks(packs);
-
+  filterPanel.classList.remove("hidden");
   boxSummaryPanel.classList.remove("hidden");
   summaryPanel.classList.remove("hidden");
   resultPanel.classList.remove("hidden");
+
+  updateDisplayedResults();
+}
+
+function updateDisplayedResults() {
+  // フィルターはカード別集計のみ適用
+  const filteredPacksForSummary = filterPacks(currentPacks);
+  const summary = createCardSummary(filteredPacksForSummary);
+
+  // BOX封入内訳・Pack Resultは常に全体表示
+  const boxSummary = createBoxSummary(currentPacks);
+
+  displayBoxSummary(boxSummary);
+  displaySummary(summary);
+  displayPacks(currentPacks);
+}
+
+function renderFilterButtons() {
+  renderRarityFilterButtons();
+  renderKindFilterButtons();
+}
+
+function renderRarityFilterButtons() {
+  const availableRarities = new Set(cards.map(card => card.rarity || "不明"));
+
+  const rarities = RARITY_FILTER_ORDER.filter(rarity => {
+    return availableRarities.has(rarity);
+  });
+
+  rarityFilterButtonsDiv.innerHTML = rarities.map(rarity => {
+    const isActive = activeRarityFilters.has(rarity);
+
+    return `
+      <button
+        type="button"
+        class="filter-chip ${isActive ? "is-active" : ""}"
+        data-filter-value="${escapeHtml(rarity)}"
+      >
+        ${escapeHtml(rarity)}
+      </button>
+    `;
+  }).join("");
+
+  rarityFilterButtonsDiv.querySelectorAll("button").forEach(button => {
+    button.addEventListener("click", () => {
+      toggleSetValue(activeRarityFilters, button.dataset.filterValue);
+      renderRarityFilterButtons();
+      updateDisplayedResultsIfOpened();
+    });
+  });
+}
+
+function renderKindFilterButtons() {
+  const availableKindKeys = new Set(cards.map(card => getCardKindKey(card)));
+
+  const pokemonTypes = POKEMON_TYPE_ORDER
+    .map(type => ({
+      label: type,
+      key: `pokemon:${type}`
+    }))
+    .filter(item => availableKindKeys.has(item.key));
+
+  pokemonTypeFilterButtonsDiv.innerHTML = pokemonTypes.map(item => {
+    return renderKindFilterButton(item.label, item.key);
+  }).join("");
+
+  const trainerTypes = TRAINER_TYPE_ORDER
+    .map(type => ({
+      label: type,
+      key: `trainer:${type}`
+    }))
+    .filter(item => availableKindKeys.has(item.key));
+
+  trainerTypeFilterButtonsDiv.innerHTML = trainerTypes.map(item => {
+    return renderKindFilterButton(item.label, item.key);
+  }).join("");
+
+  const otherFilters = [];
+
+  if (availableKindKeys.has("energy")) {
+    otherFilters.push({
+      label: "エネルギー",
+      key: "energy"
+    });
+  }
+
+  if (availableKindKeys.has("unknown")) {
+    otherFilters.push({
+      label: "不明",
+      key: "unknown"
+    });
+  }
+
+  otherFilterButtonsDiv.innerHTML = otherFilters.map(item => {
+    return renderKindFilterButton(item.label, item.key);
+  }).join("");
+
+  [
+    pokemonTypeFilterButtonsDiv,
+    trainerTypeFilterButtonsDiv,
+    otherFilterButtonsDiv
+  ].forEach(container => {
+    container.querySelectorAll("button").forEach(button => {
+      button.addEventListener("click", () => {
+        toggleSetValue(activeKindFilters, button.dataset.filterValue);
+        renderKindFilterButtons();
+        updateDisplayedResultsIfOpened();
+      });
+    });
+  });
+}
+
+function renderKindFilterButton(label, key) {
+  const isActive = activeKindFilters.has(key);
+
+  return `
+    <button
+      type="button"
+      class="filter-chip ${isActive ? "is-active" : ""}"
+      data-filter-value="${escapeHtml(key)}"
+    >
+      ${escapeHtml(label)}
+    </button>
+  `;
+}
+
+function updateDisplayedResultsIfOpened() {
+  if (currentPacks.length === 0) {
+    return;
+  }
+
+  updateDisplayedResults();
+}
+
+function toggleSetValue(targetSet, value) {
+  if (targetSet.has(value)) {
+    targetSet.delete(value);
+  } else {
+    targetSet.add(value);
+  }
+}
+
+function clearFilters() {
+  activeRarityFilters.clear();
+  activeKindFilters.clear();
+}
+
+function filterPacks(packs) {
+  return packs
+    .map(pack => {
+      return {
+        ...pack,
+        cards: pack.cards.filter(card => matchesActiveFilters(card))
+      };
+    })
+    .filter(pack => pack.cards.length > 0);
+}
+
+function matchesActiveFilters(card) {
+  const rarityMatches =
+    activeRarityFilters.size === 0 ||
+    activeRarityFilters.has(card.rarity || "不明");
+
+  const kindMatches =
+    activeKindFilters.size === 0 ||
+    activeKindFilters.has(getCardKindKey(card));
+
+  return rarityMatches && kindMatches;
+}
+
+function getCardKindKey(card) {
+  if (card.category === "pokemon") {
+    return `pokemon:${card.pokemonType || "不明"}`;
+  }
+
+  if (card.category === "trainer") {
+    return `trainer:${card.trainerType || "不明"}`;
+  }
+
+  if (card.category === "energy") {
+    return "energy";
+  }
+
+  return "unknown";
 }
 
 function displayBoxSummary(boxSummary) {
@@ -120,7 +448,7 @@ function displayBoxSummary(boxSummary) {
 
 function displaySummary(summary) {
   if (summary.length === 0) {
-    summaryDiv.innerHTML = "<p>カードがありません。</p>";
+    summaryDiv.innerHTML = "<p>条件に一致するカードがありません。</p>";
     return;
   }
 
@@ -132,6 +460,11 @@ function displaySummary(summary) {
 }
 
 function displayPacks(packs) {
+  if (packs.length === 0) {
+    resultDiv.innerHTML = "<p>開封結果がありません。</p>";
+    return;
+  }
+
   resultDiv.innerHTML = `
     <div class="pack-list">
       ${packs.map(pack => {
@@ -191,7 +524,7 @@ function formatCardNo(card) {
 
 function setStatus(message, type = "") {
   statusDiv.textContent = message;
-  statusDiv.classList.remove("is-success", "is-error");
+  statusDiv.classList.remove("hidden", "is-success", "is-error");
 
   if (type === "success") {
     statusDiv.classList.add("is-success");
@@ -202,27 +535,13 @@ function setStatus(message, type = "") {
   }
 }
 
-function getRarityDisplayIndex(rarity) {
-  const order = [
-    "C",
-    "U",
-    "R",
-    "RR",
-    "AR",
-    "SR",
-    "SAR",
-    "UR",
-    "MUR",
-    "BWR",
-    "MA",
-    "SSR",
-    "MM",
-    "ACE",
-    "HR",
-    "不明"
-  ];
+function hideStatus() {
+  statusDiv.textContent = "";
+  statusDiv.classList.add("hidden");
+}
 
-  const index = order.indexOf(rarity);
+function getRarityDisplayIndex(rarity) {
+  const index = RARITY_FILTER_ORDER.indexOf(rarity);
   return index === -1 ? 999 : index;
 }
 

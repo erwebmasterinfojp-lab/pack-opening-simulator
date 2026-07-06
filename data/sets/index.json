@@ -1,0 +1,18 @@
+[
+    {
+    "setCode": "M5",
+    "displayName": "アビスアイ",
+    "description": "MEGAシリーズの拡張パック。現在対応中のテスト対象です。",
+    "cardMasterPath": "./data/cards/M5.json",
+    "rulePath": "./data/rules/M5.json",
+    "thumbnailPath": null
+    },
+    {
+    "setCode": "M6",
+    "displayName": "ストームエメラルダ",
+    "description": "ストームエメラルダ シールド戦向け。",
+    "cardMasterPath": "./data/cards/M6.json",
+    "rulePath": "./data/rules/M6.json",
+    "thumbnailPath": null
+    }
+]

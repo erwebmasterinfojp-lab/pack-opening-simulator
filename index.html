@@ -22,32 +22,21 @@
   <main class="page">
     <section class="panel set-panel">
       <div class="section-heading">
-        <p class="section-kicker">Step 1</p>
         <h2>パックシリーズ</h2>
       </div>
 
-      <div class="set-card is-active">
-        <div class="set-card__image">
-          <img src="./assets/cards/placeholder.png" alt="アビスアイ" />
-        </div>
-        <div class="set-card__body">
-          <p class="set-card__code">M5</p>
-          <h3>アビスアイ</h3>
-          <p>現在はM5のみ対応。今後、ストームエメラルダなどを追加予定です。</p>
-        </div>
-      </div>
+      <div id="set-list" class="set-list"></div>
 
-      <div id="status" class="status">カードマスター・封入ルール読み込み中...</div>
+      <div id="status" class="status">パックシリーズ読み込み中...</div>
     </section>
 
     <section class="panel control-panel">
       <div class="section-heading">
-        <p class="section-kicker">Step 2</p>
         <h2>開封する</h2>
       </div>
 
       <div class="button-row">
-        <button id="open-15-packs" class="primary-button" disabled>
+        <button id="open-15-packs" class="secondary-button" disabled>
           15パック開封
         </button>
         <button id="open-30-packs" class="secondary-button" disabled>
@@ -58,6 +47,44 @@
       <p class="help-text">
         ※ 現在は仮のカード画像を全カード共通で表示しています。
       </p>
+    </section>
+
+    <section id="filter-panel" class="panel hidden filter-panel">
+      <details class="filter-details">
+        <summary class="filter-summary">
+          <div>
+            <p class="section-kicker">Filter</p>
+            <h2>表示フィルター</h2>
+          </div>
+          <span class="filter-summary__icon">開く</span>
+        </summary>
+
+        <div class="filter-content">
+          <div class="filter-block">
+            <h3>レアリティ</h3>
+            <div id="rarity-filter-buttons" class="filter-chip-row"></div>
+          </div>
+
+          <div class="filter-block">
+            <h3>ポケモンのタイプ</h3>
+            <div id="pokemon-type-filter-buttons" class="filter-chip-row"></div>
+          </div>
+
+          <div class="filter-block">
+            <h3>トレーナーズ</h3>
+            <div id="trainer-type-filter-buttons" class="filter-chip-row"></div>
+          </div>
+
+          <div class="filter-block">
+            <h3>その他</h3>
+            <div id="other-filter-buttons" class="filter-chip-row"></div>
+          </div>
+
+          <p class="help-text">
+            ※ ボタンを押すとカード別集計のみ絞り込みます。すべてOFFの場合は全カードを表示します。
+          </p>
+        </div>
+      </details>
     </section>
 
     <section id="box-summary-panel" class="panel hidden">
