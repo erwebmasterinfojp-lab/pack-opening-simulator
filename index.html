@@ -2,24 +2,95 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>ストームエメラルダ シールド戦シミュレーター</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>ポケカ シールド戦 開封シミュレーター</title>
+
+  <link rel="stylesheet" href="./src/styles.css" />
 </head>
 <body>
-  <h1>ストームエメラルダ シールド戦シミュレーター</h1>
+  <header class="site-header">
+    <div class="site-header__inner">
+      <p class="site-kicker">Pokémon Card Fan Tool</p>
+      <h1>シールド戦 開封シミュレーター</h1>
+      <p class="site-lead">
+        1BOX・15パック開封をシミュレーションし、カード別の枚数を確認できます。
+      </p>
+    </div>
+  </header>
 
-  <p>
-    M5.jsonのカードマスターを使って、パック開封結果をシミュレーションします。
-  </p>
+  <main class="page">
+    <section class="panel set-panel">
+      <div class="section-heading">
+        <p class="section-kicker">Step 1</p>
+        <h2>パックシリーズ</h2>
+      </div>
 
-  <div id="status">カードマスター読み込み中...</div>
+      <div class="set-card is-active">
+        <div class="set-card__image">
+          <img src="./assets/cards/placeholder.png" alt="アビスアイ" />
+        </div>
+        <div class="set-card__body">
+          <p class="set-card__code">M5</p>
+          <h3>アビスアイ</h3>
+          <p>現在はM5のみ対応。今後、ストームエメラルダなどを追加予定です。</p>
+        </div>
+      </div>
 
-  <button id="open-15-packs" disabled>15パック開封する</button>
-  <button id="open-30-packs" disabled>1BOX開封する</button>
+      <div id="status" class="status">カードマスター・封入ルール読み込み中...</div>
+    </section>
 
-  <div id="summary"></div>
+    <section class="panel control-panel">
+      <div class="section-heading">
+        <p class="section-kicker">Step 2</p>
+        <h2>開封する</h2>
+      </div>
 
-  <h2>開封結果</h2>
-  <div id="result"></div>
+      <div class="button-row">
+        <button id="open-15-packs" class="primary-button" disabled>
+          15パック開封
+        </button>
+        <button id="open-30-packs" class="secondary-button" disabled>
+          1BOX開封
+        </button>
+      </div>
+
+      <p class="help-text">
+        ※ 現在は仮のカード画像を全カード共通で表示しています。
+      </p>
+    </section>
+
+    <section id="box-summary-panel" class="panel hidden">
+      <div class="section-heading">
+        <p class="section-kicker">Box Summary</p>
+        <h2>封入内訳</h2>
+      </div>
+      <div id="box-summary"></div>
+    </section>
+
+    <section id="summary-panel" class="panel hidden">
+      <div class="section-heading">
+        <p class="section-kicker">Result Summary</p>
+        <h2>カード別集計</h2>
+      </div>
+      <div id="summary"></div>
+    </section>
+
+    <section id="result-panel" class="panel hidden">
+      <div class="section-heading">
+        <p class="section-kicker">Pack Result</p>
+        <h2>開封結果</h2>
+      </div>
+      <div id="result"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>
+      このサイトは個人制作の非公式ファンツールです。
+      株式会社ポケモン、任天堂、Creatures、GAME FREAKとは関係ありません。
+    </p>
+  </footer>
 
   <script type="module" src="./src/app.js"></script>
 </body>
