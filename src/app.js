@@ -138,7 +138,6 @@ function renderSetList() {
         </div>
 
         <div class="set-card__body">
-          <p class="set-card__code">${escapeHtml(set.setCode)}</p>
           <h3>${escapeHtml(set.displayName)}</h3>
           <p>${escapeHtml(set.description || "")}</p>
         </div>
