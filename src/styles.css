@@ -581,3 +581,134 @@ h1 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+/* =========================
+   Card Hover Zoom
+========================= */
+
+.summary-grid,
+.pack-grid,
+.pack-list,
+.pack-card,
+.panel {
+  overflow: visible;
+}
+
+.card-tile.image-only-card {
+  position: relative;
+  z-index: 1;
+  transition:
+    transform 0.16s ease,
+    z-index 0.16s ease;
+  transform-origin: center center;
+}
+
+.card-tile.image-only-card:hover {
+  transform: scale(2);
+  z-index: 100;
+}
+
+.card-tile.image-only-card:hover .card-tile__image {
+  border-color: var(--primary);
+  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.25);
+}
+
+/* =========================
+   Card Tap / Click Zoom Modal
+========================= */
+
+.card-tile.image-only-card {
+  cursor: zoom-in;
+}
+
+.card-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.card-modal.hidden {
+  display: none !important;
+}
+
+.card-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(4px);
+}
+
+.card-modal__content {
+  position: relative;
+  z-index: 1;
+  width: min(92vw, 430px);
+  max-height: 92vh;
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+}
+
+.card-modal__image {
+  display: block;
+  max-width: 100%;
+  max-height: 82vh;
+  object-fit: contain;
+  border-radius: 18px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.38);
+  background: #ffffff;
+}
+
+.card-modal__caption {
+  max-width: 100%;
+  padding: 8px 12px;
+  color: #ffffff;
+  background: rgba(15, 23, 42, 0.82);
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.card-modal__close {
+  position: absolute;
+  right: -10px;
+  top: -12px;
+  z-index: 2;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  color: #ffffff;
+  background: rgba(15, 23, 42, 0.92);
+  cursor: pointer;
+  font-size: 1.6rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+body.modal-open {
+  overflow: hidden;
+}
+
+@media (max-width: 640px) {
+  .card-modal {
+    padding: 14px;
+  }
+
+  .card-modal__content {
+    width: min(94vw, 390px);
+  }
+
+  .card-modal__image {
+    max-height: 78vh;
+    border-radius: 14px;
+  }
+
+  .card-modal__close {
+    right: -4px;
+    top: -10px;
+  }
+}
