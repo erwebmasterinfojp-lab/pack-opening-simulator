@@ -12,7 +12,9 @@
     "evolutionStage": "たね",
     "hp": 110,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50220/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50220/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050220_P_TOROPIUSU.jpg",
+    "imageLocalPath": "./assets/cards/M5/001_C_トロピウス_50220.jpg"
   },
   {
     "officialCardId": "50221",
@@ -27,7 +29,9 @@
     "evolutionStage": "たね",
     "hp": 70,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50221/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50221/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050221_P_AGOJIMUSHI.jpg",
+    "imageLocalPath": "./assets/cards/M5/002_C_アゴジムシ_50221.jpg"
   },
   {
     "officialCardId": "50222",
@@ -42,7 +46,9 @@
     "evolutionStage": "たね",
     "hp": 70,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50222/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50222/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050222_P_KARIKIRI.jpg",
+    "imageLocalPath": "./assets/cards/M5/003_C_カリキリ_50222.jpg"
   },
   {
     "officialCardId": "50223",
@@ -57,7 +63,9 @@
     "evolutionStage": null,
     "hp": 260,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50223/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50223/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050223_P_RARANTESUEX.jpg",
+    "imageLocalPath": "./assets/cards/M5/004_RR_ラランテスex_50223.jpg"
   },
   {
     "officialCardId": "50224",
@@ -72,7 +80,9 @@
     "evolutionStage": "たね",
     "hp": 30,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50224/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50224/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050224_P_CHIXYADESU.jpg",
+    "imageLocalPath": "./assets/cards/M5/005_C_チャデス_50224.jpg"
   },
   {
     "officialCardId": "50225",
@@ -87,7 +97,9 @@
     "evolutionStage": null,
     "hp": 60,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50225/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50225/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050225_P_YABASOCHIXYA.jpg",
+    "imageLocalPath": "./assets/cards/M5/006_U_ヤバソチャ_50225.jpg"
   },
   {
     "officialCardId": "50226",
@@ -102,7 +114,9 @@
     "evolutionStage": "たね",
     "hp": 140,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50226/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50226/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050226_P_HIDORAN.jpg",
+    "imageLocalPath": "./assets/cards/M5/007_U_ヒードラン_50226.jpg"
   },
   {
     "officialCardId": "50227",
@@ -117,7 +131,9 @@
     "evolutionStage": "たね",
     "hp": 80,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50227/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50227/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050227_P_YAKUDE.jpg",
+    "imageLocalPath": "./assets/cards/M5/008_C_ヤクデ_50227.jpg"
   },
   {
     "officialCardId": "50228",
@@ -132,7 +148,9 @@
     "evolutionStage": null,
     "hp": 140,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50228/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50228/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050228_P_MARUYAKUDE.jpg",
+    "imageLocalPath": "./assets/cards/M5/009_C_マルヤクデ_50228.jpg"
   },
   {
     "officialCardId": "50229",
@@ -147,7 +165,9 @@
     "evolutionStage": "たね",
     "hp": 80,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50229/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50229/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050229_P_KARUBOU.jpg",
+    "imageLocalPath": "./assets/cards/M5/010_C_カルボウ_50229.jpg"
   },
   {
     "officialCardId": "50230",
@@ -162,7 +182,9 @@
     "evolutionStage": null,
     "hp": 140,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50230/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50230/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050230_P_GURENARUMA.jpg",
+    "imageLocalPath": "./assets/cards/M5/011_R_グレンアルマ_50230.jpg"
   },
   {
     "officialCardId": "50231",
@@ -177,7 +199,9 @@
     "evolutionStage": "たね",
     "hp": 70,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50231/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50231/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050231_P_TOSAKINTO.jpg",
+    "imageLocalPath": "./assets/cards/M5/012_C_トサキント_50231.jpg"
   },
   {
     "officialCardId": "50232",
@@ -192,7 +216,9 @@
     "evolutionStage": null,
     "hp": 110,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50232/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50232/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050232_P_AZUMAOU.jpg",
+    "imageLocalPath": "./assets/cards/M5/013_U_アズマオウ_50232.jpg"
   },
   {
     "officialCardId": "50233",
@@ -207,7 +233,9 @@
     "evolutionStage": "たね",
     "hp": 130,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50233/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50233/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050233_P_HOERUKO.jpg",
+    "imageLocalPath": "./assets/cards/M5/014_C_ホエルコ_50233.jpg"
   },
   {
     "officialCardId": "50234",
@@ -222,7 +250,9 @@
     "evolutionStage": null,
     "hp": 380,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50234/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50234/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050234_P_HOERUOEX.jpg",
+    "imageLocalPath": "./assets/cards/M5/015_RR_ホエルオーex_50234.jpg"
   },
   {
     "officialCardId": "50235",
@@ -237,7 +267,9 @@
     "evolutionStage": "たね",
     "hp": 100,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50235/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50235/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050235_P_JIRANSU.jpg",
+    "imageLocalPath": "./assets/cards/M5/016_U_ジーランス_50235.jpg"
   },
   {
     "officialCardId": "50236",
@@ -252,7 +284,9 @@
     "evolutionStage": "たね",
     "hp": 70,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50236/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50236/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050236_P_ASHIMARI.jpg",
+    "imageLocalPath": "./assets/cards/M5/017_C_アシマリ_50236.jpg"
   },
   {
     "officialCardId": "50237",
@@ -267,7 +301,9 @@
     "evolutionStage": null,
     "hp": 90,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50237/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50237/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050237_P_OSHIXYAMARI.jpg",
+    "imageLocalPath": "./assets/cards/M5/018_C_オシャマリ_50237.jpg"
   },
   {
     "officialCardId": "50238",
@@ -282,7 +318,9 @@
     "evolutionStage": null,
     "hp": 150,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50238/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50238/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050238_P_ASHIRENU.jpg",
+    "imageLocalPath": "./assets/cards/M5/019_R_アシレーヌ_50238.jpg"
   },
   {
     "officialCardId": "50239",
@@ -297,7 +335,9 @@
     "evolutionStage": "たね",
     "hp": 80,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50239/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50239/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050239_P_NAMIIRUKA.jpg",
+    "imageLocalPath": "./assets/cards/M5/020_C_ナミイルカ_50239.jpg"
   },
   {
     "officialCardId": "50240",
@@ -312,7 +352,9 @@
     "evolutionStage": null,
     "hp": 150,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50240/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50240/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050240_P_IRUKAMAN.jpg",
+    "imageLocalPath": "./assets/cards/M5/021_U_イルカマン_50240.jpg"
   },
   {
     "officialCardId": "50241",
@@ -327,7 +369,9 @@
     "evolutionStage": "たね",
     "hp": 70,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50241/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50241/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050241_P_RAKURAI.jpg",
+    "imageLocalPath": "./assets/cards/M5/022_C_ラクライ_50241.jpg"
   },
   {
     "officialCardId": "50242",
@@ -342,7 +386,9 @@
     "evolutionStage": null,
     "hp": 120,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50242/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50242/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050242_P_RAIBORUTO.jpg",
+    "imageLocalPath": "./assets/cards/M5/023_U_ライボルト_50242.jpg"
   },
   {
     "officialCardId": "50243",
@@ -357,7 +403,9 @@
     "evolutionStage": null,
     "hp": 100,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50243/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50243/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050243_P_DENJIMUSHI.jpg",
+    "imageLocalPath": "./assets/cards/M5/024_C_デンヂムシ_50243.jpg"
   },
   {
     "officialCardId": "50244",
@@ -372,7 +420,9 @@
     "evolutionStage": null,
     "hp": 160,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50244/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50244/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050244_P_KUWAGANON.jpg",
+    "imageLocalPath": "./assets/cards/M5/025_U_クワガノン_50244.jpg"
   },
   {
     "officialCardId": "50245",
@@ -387,7 +437,9 @@
     "evolutionStage": "たね",
     "hp": 270,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50245/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50245/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050245_P_MZERAORAEX.jpg",
+    "imageLocalPath": "./assets/cards/M5/026_RR_メガゼラオラex_50245.jpg"
   },
   {
     "officialCardId": "50246",
@@ -402,7 +454,9 @@
     "evolutionStage": "たね",
     "hp": 120,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50246/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50246/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050246_P_MIRAIDON.jpg",
+    "imageLocalPath": "./assets/cards/M5/027_U_ミライドン_50246.jpg"
   },
   {
     "officialCardId": "50247",
@@ -417,7 +471,9 @@
     "evolutionStage": "たね",
     "hp": 70,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50247/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50247/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050247_P_YADON.jpg",
+    "imageLocalPath": "./assets/cards/M5/028_C_ヤドン_50247.jpg"
   },
   {
     "officialCardId": "50248",
@@ -432,7 +488,9 @@
     "evolutionStage": null,
     "hp": 130,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50248/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50248/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050248_P_YADORAN.jpg",
+    "imageLocalPath": "./assets/cards/M5/029_U_ヤドラン_50248.jpg"
   },
   {
     "officialCardId": "50249",
@@ -447,7 +505,9 @@
     "evolutionStage": "たね",
     "hp": 100,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50249/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50249/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050249_P_RUJIXYURA.jpg",
+    "imageLocalPath": "./assets/cards/M5/030_C_ルージュラ_50249.jpg"
   },
   {
     "officialCardId": "50250",
@@ -462,7 +522,9 @@
     "evolutionStage": "たね",
     "hp": 50,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50250/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50250/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050250_P_KAGEBOUZU.jpg",
+    "imageLocalPath": "./assets/cards/M5/031_C_カゲボウズ_50250.jpg"
   },
   {
     "officialCardId": "50251",
@@ -477,7 +539,9 @@
     "evolutionStage": null,
     "hp": 80,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50251/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50251/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050251_P_JIXYUPETTA.jpg",
+    "imageLocalPath": "./assets/cards/M5/032_U_ジュペッタ_50251.jpg"
   },
   {
     "officialCardId": "50252",
@@ -492,7 +556,9 @@
     "evolutionStage": "たね",
     "hp": 60,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50252/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50252/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050252_P_MIKARUGE.jpg",
+    "imageLocalPath": "./assets/cards/M5/033_R_ミカルゲ_50252.jpg"
   },
   {
     "officialCardId": "50253",
@@ -507,7 +573,9 @@
     "evolutionStage": "たね",
     "hp": 70,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50253/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50253/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050253_P_HITOMOSHI.jpg",
+    "imageLocalPath": "./assets/cards/M5/034_C_ヒトモシ_50253.jpg"
   },
   {
     "officialCardId": "50254",
@@ -522,7 +590,9 @@
     "evolutionStage": null,
     "hp": 90,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50254/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50254/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050254_P_RANPURA.jpg",
+    "imageLocalPath": "./assets/cards/M5/035_C_ランプラー_50254.jpg"
   },
   {
     "officialCardId": "50255",
@@ -537,7 +607,9 @@
     "evolutionStage": null,
     "hp": 350,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50255/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50255/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050255_P_MSHIXYANDERAEX.jpg",
+    "imageLocalPath": "./assets/cards/M5/036_RR_メガシャンデラex_50255.jpg"
   },
   {
     "officialCardId": "50256",
@@ -552,7 +624,9 @@
     "evolutionStage": "たね",
     "hp": 140,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50256/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50256/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050256_P_DADARIN.jpg",
+    "imageLocalPath": "./assets/cards/M5/037_U_ダダリン_50256.jpg"
   },
   {
     "officialCardId": "50257",
@@ -567,7 +641,9 @@
     "evolutionStage": "たね",
     "hp": 90,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50257/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50257/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050257_P_MASHIXYADO.jpg",
+    "imageLocalPath": "./assets/cards/M5/038_U_マーシャドー_50257.jpg"
   },
   {
     "officialCardId": "50258",
@@ -582,7 +658,9 @@
     "evolutionStage": null,
     "hp": 150,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50258/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50258/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050258_P_KONOYOZARU.jpg",
+    "imageLocalPath": "./assets/cards/M5/039_U_コノヨザル_50258.jpg"
   },
   {
     "officialCardId": "50259",
@@ -597,7 +675,9 @@
     "evolutionStage": "たね",
     "hp": 50,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50259/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50259/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050259_P_MANKI.jpg",
+    "imageLocalPath": "./assets/cards/M5/040_C_マンキー_50259.jpg"
   },
   {
     "officialCardId": "50260",
@@ -612,7 +692,9 @@
     "evolutionStage": null,
     "hp": 110,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50260/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50260/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050260_P_OKORIZARU.jpg",
+    "imageLocalPath": "./assets/cards/M5/041_C_オコリザル_50260.jpg"
   },
   {
     "officialCardId": "50261",
@@ -627,7 +709,9 @@
     "evolutionStage": null,
     "hp": 100,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50261/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50261/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050261_P_ZUGAIDOSU.jpg",
+    "imageLocalPath": "./assets/cards/M5/042_C_ズガイドス_50261.jpg"
   },
   {
     "officialCardId": "50262",
@@ -642,7 +726,9 @@
     "evolutionStage": null,
     "hp": 330,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50262/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50262/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050262_P_RAMUPARUDOEX.jpg",
+    "imageLocalPath": "./assets/cards/M5/043_RR_ラムパルドex_50262.jpg"
   },
   {
     "officialCardId": "50263",
@@ -657,7 +743,9 @@
     "evolutionStage": "たね",
     "hp": 70,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50263/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50263/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050263_P_MOGURIXYU.jpg",
+    "imageLocalPath": "./assets/cards/M5/044_C_モグリュー_50263.jpg"
   },
   {
     "officialCardId": "50264",
@@ -672,7 +760,9 @@
     "evolutionStage": "たね",
     "hp": 130,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50264/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50264/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050264_P_KORAIDON.jpg",
+    "imageLocalPath": "./assets/cards/M5/045_U_コライドン_50264.jpg"
   },
   {
     "officialCardId": "50265",
@@ -687,7 +777,9 @@
     "evolutionStage": "たね",
     "hp": 280,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50265/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50265/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050265_P_MDAKURAIEX.jpg",
+    "imageLocalPath": "./assets/cards/M5/046_RR_メガダークライex_50265.jpg"
   },
   {
     "officialCardId": "50266",
@@ -702,7 +794,9 @@
     "evolutionStage": "たね",
     "hp": 70,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50266/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50266/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050266_P_BARUCHIXYAI.jpg",
+    "imageLocalPath": "./assets/cards/M5/047_C_バルチャイ_50266.jpg"
   },
   {
     "officialCardId": "50267",
@@ -717,7 +811,9 @@
     "evolutionStage": null,
     "hp": 120,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50267/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50267/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050267_P_BARUJINA.jpg",
+    "imageLocalPath": "./assets/cards/M5/048_C_バルジーナ_50267.jpg"
   },
   {
     "officialCardId": "50268",
@@ -732,7 +828,9 @@
     "evolutionStage": null,
     "hp": 60,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50268/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50268/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050268_P_MAIKA.jpg",
+    "imageLocalPath": "./assets/cards/M5/049_C_マーイーカ_50268.jpg"
   },
   {
     "officialCardId": "50269",
@@ -747,7 +845,9 @@
     "evolutionStage": null,
     "hp": 120,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50269/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50269/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050269_P_KARAMANERO.jpg",
+    "imageLocalPath": "./assets/cards/M5/050_U_カラマネロ_50269.jpg"
   },
   {
     "officialCardId": "50270",
@@ -762,7 +862,9 @@
     "evolutionStage": "たね",
     "hp": 70,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50270/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50270/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050270_P_KUSUNE.jpg",
+    "imageLocalPath": "./assets/cards/M5/051_C_クスネ_50270.jpg"
   },
   {
     "officialCardId": "50271",
@@ -777,7 +879,9 @@
     "evolutionStage": null,
     "hp": 100,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50271/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50271/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050271_P_FUOKUSURAI.jpg",
+    "imageLocalPath": "./assets/cards/M5/052_U_フォクスライ_50271.jpg"
   },
   {
     "officialCardId": "50272",
@@ -792,7 +896,9 @@
     "evolutionStage": "たね",
     "hp": 180,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50272/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50272/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050272_P_MORUPEKOEX.jpg",
+    "imageLocalPath": "./assets/cards/M5/053_RR_モルペコex_50272.jpg"
   },
   {
     "officialCardId": "50273",
@@ -807,7 +913,9 @@
     "evolutionStage": "たね",
     "hp": 130,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50273/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50273/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050273_P_ZARUDO.jpg",
+    "imageLocalPath": "./assets/cards/M5/054_U_ザルード_50273.jpg"
   },
   {
     "officialCardId": "50274",
@@ -822,7 +930,9 @@
     "evolutionStage": "たね",
     "hp": 70,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50274/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50274/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050274_P_ORACHIFU.jpg",
+    "imageLocalPath": "./assets/cards/M5/055_C_オラチフ_50274.jpg"
   },
   {
     "officialCardId": "50275",
@@ -837,7 +947,9 @@
     "evolutionStage": null,
     "hp": 140,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50275/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50275/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050275_P_MAFUITEIFU.jpg",
+    "imageLocalPath": "./assets/cards/M5/056_C_マフィティフ_50275.jpg"
   },
   {
     "officialCardId": "50276",
@@ -852,7 +964,9 @@
     "evolutionStage": "たね",
     "hp": 90,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50276/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50276/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050276_P_IYUI.jpg",
+    "imageLocalPath": "./assets/cards/M5/057_R_イーユイ_50276.jpg"
   },
   {
     "officialCardId": "50277",
@@ -867,7 +981,9 @@
     "evolutionStage": "たね",
     "hp": 120,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50277/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50277/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050277_P_EAMUDO.jpg",
+    "imageLocalPath": "./assets/cards/M5/058_C_エアームド_50277.jpg"
   },
   {
     "officialCardId": "50278",
@@ -882,7 +998,9 @@
     "evolutionStage": null,
     "hp": 100,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50278/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50278/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050278_P_TATETOPUSU.jpg",
+    "imageLocalPath": "./assets/cards/M5/059_C_タテトプス_50278.jpg"
   },
   {
     "officialCardId": "50279",
@@ -897,7 +1015,9 @@
     "evolutionStage": null,
     "hp": 160,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50279/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50279/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050279_P_TORIDEPUSU.jpg",
+    "imageLocalPath": "./assets/cards/M5/060_R_トリデプス_50279.jpg"
   },
   {
     "officialCardId": "50280",
@@ -912,7 +1032,9 @@
     "evolutionStage": "たね",
     "hp": 80,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50280/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50280/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050280_P_DOMIRA.jpg",
+    "imageLocalPath": "./assets/cards/M5/061_C_ドーミラー_50280.jpg"
   },
   {
     "officialCardId": "50281",
@@ -927,7 +1049,9 @@
     "evolutionStage": null,
     "hp": 130,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50281/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50281/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050281_P_DOTAKUN.jpg",
+    "imageLocalPath": "./assets/cards/M5/062_U_ドータクン_50281.jpg"
   },
   {
     "officialCardId": "50282",
@@ -942,7 +1066,9 @@
     "evolutionStage": null,
     "hp": 340,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50282/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50282/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050282_P_MDORIXYUUZUEX.jpg",
+    "imageLocalPath": "./assets/cards/M5/063_RR_メガドリュウズex_50282.jpg"
   },
   {
     "officialCardId": "50283",
@@ -957,7 +1083,9 @@
     "evolutionStage": "たね",
     "hp": 70,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50283/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50283/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050283_P_TSUTSUKERA.jpg",
+    "imageLocalPath": "./assets/cards/M5/064_C_ツツケラ_50283.jpg"
   },
   {
     "officialCardId": "50284",
@@ -972,7 +1100,9 @@
     "evolutionStage": null,
     "hp": 90,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50284/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50284/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050284_P_KERARAPPA.jpg",
+    "imageLocalPath": "./assets/cards/M5/065_C_ケララッパ_50284.jpg"
   },
   {
     "officialCardId": "50285",
@@ -987,7 +1117,9 @@
     "evolutionStage": null,
     "hp": 150,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50285/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50285/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050285_P_DODEKABASHI.jpg",
+    "imageLocalPath": "./assets/cards/M5/066_U_ドデカバシ_50285.jpg"
   },
   {
     "officialCardId": "50286",
@@ -1002,7 +1134,9 @@
     "evolutionStage": "たね",
     "hp": 110,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50286/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50286/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050286_P_TAIPUNURU.jpg",
+    "imageLocalPath": "./assets/cards/M5/067_C_タイプ_ヌル_50286.jpg"
   },
   {
     "officialCardId": "50287",
@@ -1011,13 +1145,15 @@
     "cardNoTotal": "081",
     "name": "シルヴァディ",
     "rarity": "R",
-    "category": "trainer",
+    "category": "pokemon",
     "pokemonType": "無色",
-    "trainerType": "サポート",
+    "trainerType": null,
     "evolutionStage": null,
     "hp": 140,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50287/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50287/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050287_P_SHIRUVUADEI.jpg",
+    "imageLocalPath": "./assets/cards/M5/068_R_シルヴァディ_50287.jpg"
   },
   {
     "officialCardId": "50288",
@@ -1032,7 +1168,9 @@
     "evolutionStage": "たね",
     "hp": 100,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50288/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50288/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050288_P_OTOSHIDORI.jpg",
+    "imageLocalPath": "./assets/cards/M5/069_C_オトシドリ_50288.jpg"
   },
   {
     "officialCardId": "50289",
@@ -1047,7 +1185,9 @@
     "evolutionStage": null,
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50289/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50289/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050289_T_DAKUBERU.jpg",
+    "imageLocalPath": "./assets/cards/M5/070_U_ダークベル_50289.jpg"
   },
   {
     "officialCardId": "50290",
@@ -1062,7 +1202,9 @@
     "evolutionStage": null,
     "hp": 60,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50290/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50290/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050290_T_KOBITAZUGAINOKASEKI.jpg",
+    "imageLocalPath": "./assets/cards/M5/071_C_古びたずがいの化石_50290.jpg"
   },
   {
     "officialCardId": "50291",
@@ -1077,7 +1219,9 @@
     "evolutionStage": null,
     "hp": 60,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50291/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50291/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050291_T_FURUBITATATENOKASEKI.jpg",
+    "imageLocalPath": "./assets/cards/M5/072_C_古びたたての化石_50291.jpg"
   },
   {
     "officialCardId": "50292",
@@ -1092,7 +1236,9 @@
     "evolutionStage": null,
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50292/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50292/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050292_T_GOUKAIBOMU.jpg",
+    "imageLocalPath": "./assets/cards/M5/073_U_ごうかいボム_50292.jpg"
   },
   {
     "officialCardId": "50293",
@@ -1107,7 +1253,9 @@
     "evolutionStage": null,
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50293/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50293/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050293_T_RITORAIBAJJI.jpg",
+    "imageLocalPath": "./assets/cards/M5/074_U_リトライバッジ_50293.jpg"
   },
   {
     "officialCardId": "50294",
@@ -1122,7 +1270,9 @@
     "evolutionStage": null,
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50294/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50294/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050294_T_KASUMINOGENKI.jpg",
+    "imageLocalPath": "./assets/cards/M5/075_U_カスミの元気_50294.jpg"
   },
   {
     "officialCardId": "50295",
@@ -1137,7 +1287,9 @@
     "evolutionStage": null,
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50295/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50295/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050295_T_GURAJIONOKESSEN.jpg",
+    "imageLocalPath": "./assets/cards/M5/076_U_グラジオの決戦_50295.jpg"
   },
   {
     "officialCardId": "50296",
@@ -1152,7 +1304,9 @@
     "evolutionStage": null,
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50296/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50296/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050296_T_SABIGUMINOSHITAPPA.jpg",
+    "imageLocalPath": "./assets/cards/M5/077_U_サビ組のしたっぱ_50296.jpg"
   },
   {
     "officialCardId": "50297",
@@ -1167,7 +1321,9 @@
     "evolutionStage": null,
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50297/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50297/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050297_T_MUKU.jpg",
+    "imageLocalPath": "./assets/cards/M5/078_U_ムク_50297.jpg"
   },
   {
     "officialCardId": "50298",
@@ -1182,7 +1338,9 @@
     "evolutionStage": null,
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50298/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50298/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050298_T_KASEKISAIKUTSUJIXYOU.jpg",
+    "imageLocalPath": "./assets/cards/M5/079_U_化石採掘場_50298.jpg"
   },
   {
     "officialCardId": "50299",
@@ -1197,7 +1355,9 @@
     "evolutionStage": null,
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50299/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50299/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050299_E_BORUTOKAMINARIENERUGI.jpg",
+    "imageLocalPath": "./assets/cards/M5/080_R_ボルト雷エネルギー_50299.jpg"
   },
   {
     "officialCardId": "50300",
@@ -1212,7 +1372,9 @@
     "evolutionStage": null,
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
-    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50300/regu/XY"
+    "sourceUrl": "https://www.pokemon-card.com/card-search/details.php/card/50300/regu/XY",
+    "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M5/050300_E_SHIXYADOAKUENERUGI.jpg",
+    "imageLocalPath": "./assets/cards/M5/081_R_シャドー悪エネルギー_50300.jpg"
   },
   {
     "officialCardId": "50301",
@@ -1228,7 +1390,9 @@
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
     "sourceUrl": null,
-    "isManual": true
+    "isManual": true,
+    "imageLocalPath": "./assets/cards/M5/082_AR_カリキリ_50301.jpg",
+    "imageSource": "local_assets"
   },
   {
     "officialCardId": "50302",
@@ -1244,7 +1408,9 @@
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
     "sourceUrl": null,
-    "isManual": true
+    "isManual": true,
+    "imageLocalPath": "./assets/cards/M5/083_AR_グレンアルマ_50302.jpg",
+    "imageSource": "local_assets"
   },
   {
     "officialCardId": "50303",
@@ -1260,7 +1426,9 @@
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
     "sourceUrl": null,
-    "isManual": true
+    "isManual": true,
+    "imageLocalPath": "./assets/cards/M5/084_AR_トサキント_50303.jpg",
+    "imageSource": "local_assets"
   },
   {
     "officialCardId": "50304",
@@ -1276,7 +1444,9 @@
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
     "sourceUrl": null,
-    "isManual": true
+    "isManual": true,
+    "imageLocalPath": "./assets/cards/M5/085_AR_アシレーヌ_50304.jpg",
+    "imageSource": "local_assets"
   },
   {
     "officialCardId": "50306",
@@ -1292,7 +1462,9 @@
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
     "sourceUrl": null,
-    "isManual": true
+    "isManual": true,
+    "imageLocalPath": "./assets/cards/M5/086_AR_ライボルト_50306.jpg",
+    "imageSource": "local_assets"
   },
   {
     "officialCardId": "50307",
@@ -1308,7 +1480,9 @@
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
     "sourceUrl": null,
-    "isManual": true
+    "isManual": true,
+    "imageLocalPath": "./assets/cards/M5/087_AR_ヤドラン_50307.jpg",
+    "imageSource": "local_assets"
   },
   {
     "officialCardId": "50308",
@@ -1324,7 +1498,9 @@
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
     "sourceUrl": null,
-    "isManual": true
+    "isManual": true,
+    "imageLocalPath": "./assets/cards/M5/088_AR_ダダリン_50308.jpg",
+    "imageSource": "local_assets"
   },
   {
     "officialCardId": "50309",
@@ -1340,7 +1516,9 @@
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
     "sourceUrl": null,
-    "isManual": true
+    "isManual": true,
+    "imageLocalPath": "./assets/cards/M5/089_AR_フォクスライ_50309.jpg",
+    "imageSource": "local_assets"
   },
   {
     "officialCardId": "50310",
@@ -1356,7 +1534,9 @@
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
     "sourceUrl": null,
-    "isManual": true
+    "isManual": true,
+    "imageLocalPath": "./assets/cards/M5/090_AR_ザルード_50310.jpg",
+    "imageSource": "local_assets"
   },
   {
     "officialCardId": "50311",
@@ -1372,7 +1552,9 @@
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
     "sourceUrl": null,
-    "isManual": true
+    "isManual": true,
+    "imageLocalPath": "./assets/cards/M5/091_AR_トリデプス_50311.jpg",
+    "imageSource": "local_assets"
   },
   {
     "officialCardId": "50312",
@@ -1388,7 +1570,9 @@
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
     "sourceUrl": null,
-    "isManual": true
+    "isManual": true,
+    "imageLocalPath": "./assets/cards/M5/092_AR_ドデカバシ_50312.jpg",
+    "imageSource": "local_assets"
   },
   {
     "officialCardId": "50313",
@@ -1404,7 +1588,9 @@
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
     "sourceUrl": null,
-    "isManual": true
+    "isManual": true,
+    "imageLocalPath": "./assets/cards/M5/093_AR_シルヴァディ_50313.jpg",
+    "imageSource": "local_assets"
   },
   {
     "officialCardId": "50314",
@@ -1420,7 +1606,9 @@
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
     "sourceUrl": null,
-    "isManual": true
+    "isManual": true,
+    "imageLocalPath": "./assets/cards/M5/094_SR_ラランテスex_50314.jpg",
+    "imageSource": "local_assets"
   },
   {
     "officialCardId": "50315",
@@ -1436,7 +1624,9 @@
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
     "sourceUrl": null,
-    "isManual": true
+    "isManual": true,
+    "imageLocalPath": "./assets/cards/M5/095_SR_ホエルオーex_50315.jpg",
+    "imageSource": "local_assets"
   },
   {
     "officialCardId": "50316",
@@ -1452,7 +1642,9 @@
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
     "sourceUrl": null,
-    "isManual": true
+    "isManual": true,
+    "imageLocalPath": "./assets/cards/M5/096_SR_メガゼラオラex_50316.jpg",
+    "imageSource": "local_assets"
   },
   {
     "officialCardId": "50317",
@@ -1468,7 +1660,9 @@
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
     "sourceUrl": null,
-    "isManual": true
+    "isManual": true,
+    "imageLocalPath": "./assets/cards/M5/097_SR_メガシャンデラex_50317.jpg",
+    "imageSource": "local_assets"
   },
   {
     "officialCardId": "50318",
@@ -1484,7 +1678,9 @@
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
     "sourceUrl": null,
-    "isManual": true
+    "isManual": true,
+    "imageLocalPath": "./assets/cards/M5/098_SR_ラムパルドex_50318.jpg",
+    "imageSource": "local_assets"
   },
   {
     "officialCardId": "50319",
@@ -1500,7 +1696,9 @@
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
     "sourceUrl": null,
-    "isManual": true
+    "isManual": true,
+    "imageLocalPath": "./assets/cards/M5/099_SR_メガダークライex_50319.jpg",
+    "imageSource": "local_assets"
   },
   {
     "officialCardId": "50320",
@@ -1516,7 +1714,9 @@
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
     "sourceUrl": null,
-    "isManual": true
+    "isManual": true,
+    "imageLocalPath": "./assets/cards/M5/100_SR_モルペコex_50320.jpg",
+    "imageSource": "local_assets"
   },
   {
     "officialCardId": "50321",
@@ -1532,7 +1732,9 @@
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
     "sourceUrl": null,
-    "isManual": true
+    "isManual": true,
+    "imageLocalPath": "./assets/cards/M5/101_SR_メガドリュウズex_50321.jpg",
+    "imageSource": "local_assets"
   },
   {
     "officialCardId": "50322",
@@ -1548,7 +1750,9 @@
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
     "sourceUrl": null,
-    "isManual": true
+    "isManual": true,
+    "imageLocalPath": "./assets/cards/M5/102_SR_アイアンディフェンダー_50322.jpg",
+    "imageSource": "local_assets"
   },
   {
     "officialCardId": "50323",
@@ -1564,7 +1768,9 @@
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
     "sourceUrl": null,
-    "isManual": true
+    "isManual": true,
+    "imageLocalPath": "./assets/cards/M5/103_SR_エネルギーつけかえ_50323.jpg",
+    "imageSource": "local_assets"
   },
   {
     "officialCardId": "50324",
@@ -1580,7 +1786,9 @@
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
     "sourceUrl": null,
-    "isManual": true
+    "isManual": true,
+    "imageLocalPath": "./assets/cards/M5/104_SR_クラッシュハンマー_50324.jpg",
+    "imageSource": "local_assets"
   },
   {
     "officialCardId": "50325",
@@ -1596,7 +1804,9 @@
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
     "sourceUrl": null,
-    "isManual": true
+    "isManual": true,
+    "imageLocalPath": "./assets/cards/M5/105_SR_ダークベル_50325.jpg",
+    "imageSource": "local_assets"
   },
   {
     "officialCardId": "50326",
@@ -1612,7 +1822,9 @@
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
     "sourceUrl": null,
-    "isManual": true
+    "isManual": true,
+    "imageLocalPath": "./assets/cards/M5/106_SR_ごうかいボム_50326.jpg",
+    "imageSource": "local_assets"
   },
   {
     "officialCardId": "50327",
@@ -1628,7 +1840,9 @@
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
     "sourceUrl": null,
-    "isManual": true
+    "isManual": true,
+    "imageLocalPath": "./assets/cards/M5/107_SR_ブレイブバングル_50327.jpg",
+    "imageSource": "local_assets"
   },
   {
     "officialCardId": "50328",
@@ -1644,7 +1858,9 @@
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
     "sourceUrl": null,
-    "isManual": true
+    "isManual": true,
+    "imageLocalPath": "./assets/cards/M5/108_SR_カスミの元気_50328.jpg",
+    "imageSource": "local_assets"
   },
   {
     "officialCardId": "50329",
@@ -1660,7 +1876,9 @@
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
     "sourceUrl": null,
-    "isManual": true
+    "isManual": true,
+    "imageLocalPath": "./assets/cards/M5/109_SR_グラジオの決戦_50329.jpg",
+    "imageSource": "local_assets"
   },
   {
     "officialCardId": "50330",
@@ -1676,7 +1894,9 @@
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
     "sourceUrl": null,
-    "isManual": true
+    "isManual": true,
+    "imageLocalPath": "./assets/cards/M5/110_SR_サビ組のしたっぱ_50330.jpg",
+    "imageSource": "local_assets"
   },
   {
     "officialCardId": "50331",
@@ -1692,7 +1912,9 @@
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
     "sourceUrl": null,
-    "isManual": true
+    "isManual": true,
+    "imageLocalPath": "./assets/cards/M5/111_SR_ムク_50331.jpg",
+    "imageSource": "local_assets"
   },
   {
     "officialCardId": "50332",
@@ -1708,12 +1930,14 @@
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
     "sourceUrl": null,
-    "isManual": true
+    "isManual": true,
+    "imageLocalPath": "./assets/cards/M5/112_SAR_メガゼラオラex_50332.jpg",
+    "imageSource": "local_assets"
   },
   {
     "officialCardId": "50333",
     "setCode": "M5",
-    "cardNo": "113",                   
+    "cardNo": "113",
     "cardNoTotal": "081",
     "name": "メガシャンデラex",
     "rarity": "SAR",
@@ -1724,7 +1948,9 @@
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
     "sourceUrl": null,
-    "isManual": true
+    "isManual": true,
+    "imageLocalPath": "./assets/cards/M5/113_SAR_メガシャンデラex_50333.jpg",
+    "imageSource": "local_assets"
   },
   {
     "officialCardId": "50334",
@@ -1740,7 +1966,9 @@
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
     "sourceUrl": null,
-    "isManual": true
+    "isManual": true,
+    "imageLocalPath": "./assets/cards/M5/114_SAR_メガダークライex_50334.jpg",
+    "imageSource": "local_assets"
   },
   {
     "officialCardId": "50335",
@@ -1756,7 +1984,9 @@
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
     "sourceUrl": null,
-    "isManual": true
+    "isManual": true,
+    "imageLocalPath": "./assets/cards/M5/115_SAR_モルペコex_50335.jpg",
+    "imageSource": "local_assets"
   },
   {
     "officialCardId": "50336",
@@ -1772,7 +2002,9 @@
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
     "sourceUrl": null,
-    "isManual": true
+    "isManual": true,
+    "imageLocalPath": "./assets/cards/M5/116_SAR_グラジオの決戦_50336.jpg",
+    "imageSource": "local_assets"
   },
   {
     "officialCardId": "50337",
@@ -1788,7 +2020,9 @@
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
     "sourceUrl": null,
-    "isManual": true
+    "isManual": true,
+    "imageLocalPath": "./assets/cards/M5/117_SAR_ムク_50337.jpg",
+    "imageSource": "local_assets"
   },
   {
     "officialCardId": "50338",
@@ -1804,6 +2038,8 @@
     "hp": null,
     "packName": "拡張パック「アビスアイ」",
     "sourceUrl": null,
-    "isManual": true
+    "isManual": true,
+    "imageLocalPath": "./assets/cards/M5/118_MUR_メガダークライex_50338.jpg",
+    "imageSource": "local_assets"
   }
 ]
