@@ -1,4 +1,4 @@
-export const RARITY_DISPLAY_ORDER = [
+const RARITY_DISPLAY_ORDER = [
   "C",
   "U",
   "R",
@@ -14,562 +14,859 @@ export const RARITY_DISPLAY_ORDER = [
   "MM",
   "ACE",
   "HR",
-  "SAR↑",
   "不明"
 ];
 
-// app.js 側が RARITY_ORDER を参照していても壊れないように互換用で残す
-export const RARITY_ORDER = RARITY_DISPLAY_ORDER;
-
-export const RARITY_GROUP_ORDER = ["C", "U", "R", "RR", "AR", "SR↑", "不明"];
-
-const HIGH_RARITY_VALUES = [
+const HIGH_RARITY_VALUES = new Set([
+  "AR",
   "SR",
   "SAR",
   "UR",
-  "HR",
-  "SSR",
   "MUR",
   "BWR",
   "MA",
+  "SSR",
   "MM",
   "ACE",
-  "SAR↑"
-];
+  "HR"
+]);
+
+// AR is controlled separately as a fixed-ish box count.
+// Therefore AR is excluded from the normal box-hit pool.
+const BOX_HIT_RARITY_VALUES = new Set([
+  "SR",
+  "SAR",
+  "UR",
+  "MUR",
+  "BWR",
+  "MA",
+  "SSR",
+  "MM",
+  "ACE",
+  "HR"
+]);
 
 export function normalizeCards(cards) {
-  return cards.map(card => {
-    const rarity = card.rarity || "不明";
-    const rarityGroup = getRarityGroup(rarity);
+  if (!Array.isArray(cards)) {
+    return [];
+  }
 
+  return cards.map(card => {
     return {
       ...card,
-      rarity,
-      rarityGroup,
-      cardNoNumber: toCardNoNumber(card.cardNo),
-      displayName: `${card.cardNo} ${card.name} ${rarity}`
+      rarity: card.rarity || "不明"
     };
   });
 }
 
-export function getRarityGroup(rarity) {
-  if (["C", "U", "R", "RR", "AR"].includes(rarity)) {
-    return rarity;
-  }
+export function openPacks(cards, packCount, packRule = {}) {
+  const normalizedCards = normalizeCards(cards);
+  const packsPerBox = getPacksPerBox(packRule);
 
-  if (HIGH_RARITY_VALUES.includes(rarity)) {
-    return "SR↑";
-  }
+  // 15 packs are treated as opening half of one generated box.
+  if (packCount <= packsPerBox) {
+    const boxPacks = openBox(normalizedCards, packRule);
 
-  return "不明";
-}
-
-export function buildCardPools(cards) {
-  const pools = {};
-
-  cards.forEach(card => {
-    addCardToPool(pools, card.rarityGroup, card);
-
-    // CやUなど、rarityGroup === rarity の場合に二重登録しない
-    if (card.rarity !== card.rarityGroup) {
-      addCardToPool(pools, card.rarity, card);
+    if (packCount === packsPerBox) {
+      return boxPacks;
     }
-  });
 
-  Object.keys(pools).forEach(key => {
-    pools[key] = sortCards(pools[key]);
-  });
-
-  return pools;
-}
-
-function addCardToPool(pools, key, card) {
-  if (!key) {
-    return;
-  }
-
-  if (!pools[key]) {
-    pools[key] = [];
-  }
-
-  pools[key].push(card);
-}
-
-export function openPacks(cards, packCount, packRule) {
-  if (packRule.boxRules?.enabled) {
-    const resultPacks = [];
-    let nextPackNo = 1;
-
-    while (resultPacks.length < packCount) {
-      const box = openBox(cards, packRule);
-
-      for (const pack of box.packs) {
-        resultPacks.push({
+    return shuffleArray(boxPacks)
+      .slice(0, packCount)
+      .map((pack, index) => {
+        return {
           ...pack,
-          packNo: nextPackNo
-        });
-
-        nextPackNo++;
-
-        if (resultPacks.length >= packCount) {
-          break;
-        }
-      }
-    }
-
-    return resultPacks;
+          packNo: index + 1,
+          originalBoxPackNo: pack.packNo
+        };
+      });
   }
 
-  return openLoosePacks(cards, packCount, packRule);
+  const packs = [];
+
+  while (packs.length < packCount) {
+    packs.push(...openBox(normalizedCards, packRule));
+  }
+
+  return packs.slice(0, packCount).map((pack, index) => {
+    return {
+      ...pack,
+      packNo: index + 1
+    };
+  });
 }
 
-export function openBox(cards, packRule) {
+export function openBox(cards, packRule = {}) {
   const pools = buildCardPools(cards);
-  const packsPerBox = packRule.packsPerBox || 30;
+  const packsPerBox = getPacksPerBox(packRule);
+  const boxPlan = createBoxPlan(pools, packRule);
 
-  const variableSlotCards = createBoxVariableSlotCards(
-    pools,
-    packRule,
+  // R / RR / AR / SR+ are all 4th-slot hit cards.
+  // One hit card is assigned to at most one pack, so R/RR and high rarity
+  // cannot appear in the same pack.
+  const slot4Assignments = assignCardsToRandomPacks(
+    boxPlan.slot4HitCards,
     packsPerBox
   );
 
-  shuffleArray(variableSlotCards);
-
   const packs = [];
 
-  for (let i = 1; i <= packsPerBox; i++) {
-    const packCards = [];
-    const excludedCardIdsInPack = new Set();
-
-    for (const slot of packRule.baseSlots || []) {
-      const count = slot.count || 1;
-
-      for (let j = 0; j < count; j++) {
-        const card = pickFromPool(pools, slot.rarityGroup, excludedCardIdsInPack);
-
-        if (card) {
-          packCards.push(card);
-          excludedCardIdsInPack.add(getCardKey(card));
-        }
-      }
-    }
-
-    const variableCard = variableSlotCards[i - 1];
-
-    if (variableCard) {
-      packCards.push(variableCard);
-    }
+  for (let index = 0; index < packsPerBox; index += 1) {
+    const slot4Card = slot4Assignments.get(index) || null;
 
     packs.push({
-      packNo: i,
-      cards: sortCards(packCards.filter(Boolean))
-    });
-  }
-
-  return {
-    packs,
-    boxSummary: createBoxSummary(packs)
-  };
-}
-
-function openLoosePacks(cards, packCount, packRule) {
-  const pools = buildCardPools(cards);
-  const packs = [];
-
-  for (let i = 1; i <= packCount; i++) {
-    const packCards = [];
-    const excludedCardIdsInPack = new Set();
-
-    for (const slot of packRule.baseSlots || []) {
-      const count = slot.count || 1;
-
-      for (let j = 0; j < count; j++) {
-        const card = pickFromPool(pools, slot.rarityGroup, excludedCardIdsInPack);
-
-        if (card) {
-          packCards.push(card);
-          excludedCardIdsInPack.add(getCardKey(card));
-        }
-      }
-    }
-
-    const rareCard = pickFromPool(pools, "R", excludedCardIdsInPack);
-
-    if (rareCard) {
-      packCards.push(rareCard);
-    }
-
-    packs.push({
-      packNo: i,
-      cards: sortCards(packCards.filter(Boolean))
+      packNo: index + 1,
+      cards: buildPackCards({
+        pools,
+        packRule,
+        slot4Card
+      })
     });
   }
 
   return packs;
 }
 
-function createBoxVariableSlotCards(pools, packRule, packsPerBox) {
-  const boxRules = packRule.boxRules || {};
-  const cards = [];
-  const excludedCardIdsInBox = new Set();
+function createBoxPlan(pools, packRule) {
+  const blockedBoxHitIds = new Set();
 
-  /*
-    重要：
-    fixedBoxInclusions は「MEGAシリーズのグッズSR確定枠」などを想定。
-    これは通常高レア枠とは別枠なので、boxHitTargetCountを消費しない。
-  */
-  for (const fixedRule of boxRules.fixedBoxInclusions || []) {
-    if (fixedRule.enabled === false) {
-      continue;
-    }
+  // Goods/tool SR: exactly one per box when such cards exist.
+  // Support SR is NOT included here; it stays in the normal box-hit pool.
+  const guaranteedGoodsSrCard = pickUniqueCard(
+    pools.goodsSr,
+    blockedBoxHitIds
+  );
 
-    const fixedCards = pickFixedInclusionCards(
-      pools,
-      fixedRule,
-      excludedCardIdsInBox
-    );
-
-    fixedCards.forEach(card => {
-      cards.push(card);
-      excludedCardIdsInBox.add(getCardKey(card));
-    });
+  if (guaranteedGoodsSrCard) {
+    blockedBoxHitIds.add(getCardId(guaranteedGoodsSrCard));
   }
 
-  /*
-    通常高レア枠。
-    SR / SAR / UR / MUR などから抽選する枠。
-    fixedBoxInclusionsとは独立して必ず抽選する。
-  */
-  const boxHitTargetCount =
-    boxRules.boxHit?.enabled === false
-      ? 0
-      : pickCount(boxRules.boxHit?.countDistribution, 1);
+  // Keep compatibility with existing rules, but remove goods/tool SR from
+  // fixed inclusions because they are controlled above.
+  // This prevents a leftover fixedBoxInclusions rule from creating a second
+  // goods/tool SR.
+  const fixedCards = pickFixedBoxInclusionCards(
+    pools,
+    packRule,
+    blockedBoxHitIds
+  ).filter(card => {
+    return !isGoodsSr(card);
+  });
 
-  for (let i = 0; i < boxHitTargetCount; i++) {
-    const hitCard = pickBoxHitCard(
-      pools,
-      boxRules.boxHit?.weightedRarities || [],
-      excludedCardIdsInBox
-    );
-
-    if (hitCard) {
-      cards.push(hitCard);
-      excludedCardIdsInBox.add(getCardKey(hitCard));
-    }
+  for (const card of fixedCards) {
+    blockedBoxHitIds.add(getCardId(card));
   }
 
-  /*
-    2枚箱など、通常高レア枠が増えた場合のR枚数調整。
-    例：
-    boxHitTargetCount = 1 → extraHitCount = 0
-    boxHitTargetCount = 2 → extraHitCount = 1 → Rを1枚減らす
-  */
-  const extraHitCount = Math.max(0, boxHitTargetCount - 1);
-  const rCountAdjustment =
-    extraHitCount * (boxRules.boxHit?.extraHitRCountAdjustment || 0);
+  const arCount = pickCountFromDistribution(
+    getRuleValue(packRule, [
+      ["boxRules", "arCountDistribution"],
+      ["boxRules", "ar", "countDistribution"],
+      ["arCountDistribution"]
+    ]),
+    3
+  );
 
-  for (const countRule of boxRules.boxRarityCounts || []) {
-    let count = getRarityCount(countRule);
-
-    if (countRule.rarity === "R") {
-      count = Math.max(0, count + rCountAdjustment);
+  const rrCount = pickCountFromDistribution(
+    getRuleValue(packRule, [
+      ["boxRules", "rrCountDistribution"],
+      ["boxRules", "rr", "countDistribution"],
+      ["rrCountDistribution"]
+    ]),
+    {
+      4: 70,
+      5: 30
     }
+  );
 
-    const avoidDuplicateInBox = shouldAvoidDuplicateInBox(
-      countRule.rarity,
-      boxRules,
-      countRule
-    );
+  const rCount = pickCountFromDistribution(
+    getRuleValue(packRule, [
+      ["boxRules", "rCountDistribution"],
+      ["boxRules", "r", "countDistribution"],
+      ["rCountDistribution"]
+    ]),
+    7
+  );
 
-    for (let i = 0; i < count; i++) {
-      const excludedSet = avoidDuplicateInBox ? excludedCardIdsInBox : new Set();
-      const card = pickFromPool(pools, countRule.rarity, excludedSet);
+  const boxHitCount = pickCountFromDistribution(
+    getRuleValue(packRule, [
+      ["boxRules", "boxHit", "countDistribution"],
+      ["boxHit", "countDistribution"],
+      ["boxHitCountDistribution"]
+    ]),
+    1
+  );
 
-      if (card) {
-        cards.push(card);
+  const arCards = pickManyUniqueCards(
+    pools.ar,
+    arCount,
+    blockedBoxHitIds
+  );
 
-        if (avoidDuplicateInBox) {
-          excludedCardIdsInBox.add(getCardKey(card));
-        }
-      }
-    }
+  for (const card of arCards) {
+    blockedBoxHitIds.add(getCardId(card));
   }
 
-  while (cards.length < packsPerBox) {
-    const fillCard =
-      pickFromPool(pools, boxRules.fillRarityGroup || "U", new Set()) ||
-      pickFromPool(pools, "C", new Set());
+  // Normal high-rarity hit.
+  // Goods/tool SR is completely excluded here so only one goods/tool SR can
+  // appear in a box. Support SR remains available.
+  const boxHitPool = pools.boxHit.filter(card => {
+    return !isGoodsSr(card);
+  });
 
-    if (!fillCard) {
+  const boxHitCards = pickManyUniqueCards(
+    boxHitPool,
+    boxHitCount,
+    blockedBoxHitIds
+  );
+
+  for (const card of boxHitCards) {
+    blockedBoxHitIds.add(getCardId(card));
+  }
+
+  // RR: basic target is 2 mega/primal ex + 2 normal ex.
+  // If a 5th RR appears, it is chosen from the remaining RR cards.
+  const rrCards = pickBoxRrCards(
+    pools,
+    rrCount,
+    blockedBoxHitIds
+  );
+
+  for (const card of rrCards) {
+    blockedBoxHitIds.add(getCardId(card));
+  }
+
+  // R cards are unique within a box.
+  const rCards = pickManyUniqueCards(
+    pools.r,
+    rCount,
+    blockedBoxHitIds
+  );
+
+  for (const card of rCards) {
+    blockedBoxHitIds.add(getCardId(card));
+  }
+
+  return {
+    slot4HitCards: [
+      ...(guaranteedGoodsSrCard ? [guaranteedGoodsSrCard] : []),
+      ...fixedCards,
+      ...arCards,
+      ...boxHitCards,
+      ...rrCards,
+      ...rCards
+    ]
+  };
+}
+
+function buildPackCards({ pools, packRule, slot4Card }) {
+  const packCards = [];
+  const usedCardIds = new Set();
+  const reservedCardIds = new Set();
+
+  if (slot4Card) {
+    reservedCardIds.add(getCardId(slot4Card));
+  }
+
+  const addCard = card => {
+    if (!card) {
+      return false;
+    }
+
+    const cardId = getCardId(card);
+
+    if (usedCardIds.has(cardId)) {
+      return false;
+    }
+
+    packCards.push(card);
+    usedCardIds.add(cardId);
+    return true;
+  };
+
+  const getBlockedIdsForRandomPick = () => {
+    return new Set([
+      ...usedCardIds,
+      ...reservedCardIds
+    ]);
+  };
+
+  // Slots 1-3: basic non-trainer cards only.
+  for (let i = 0; i < 3; i += 1) {
+    const card = pickUniqueCard(
+      pools.slot123,
+      getBlockedIdsForRandomPick()
+    );
+
+    addCard(card);
+  }
+
+  // Slot 4: R / RR / AR / SR+ hit card if assigned.
+  // Otherwise, a low-rarity trainer may appear here.
+  if (slot4Card) {
+    addCard(slot4Card);
+  } else {
+    const trainerUsed = packCards.some(card => isTrainer(card));
+    const trainerChance = getSlotTrainerChance(packRule, "slot4", 0.28);
+
+    let slot4NormalCard = null;
+
+    if (!trainerUsed && Math.random() < trainerChance) {
+      slot4NormalCard = pickUniqueCard(
+        pools.lowTrainer,
+        getBlockedIdsForRandomPick()
+      );
+    }
+
+    if (!slot4NormalCard) {
+      slot4NormalCard = pickUniqueCard(
+        pools.slot4NonTrainer,
+        getBlockedIdsForRandomPick()
+      );
+    }
+
+    addCard(slot4NormalCard);
+  }
+
+  // Slot 5: no R / RR / high rarity.
+  // Trainer appears 0-1 per pack, so no trainer if slot 4 already had one.
+  const trainerUsed = packCards.some(card => isTrainer(card));
+  const trainerChance = getSlotTrainerChance(packRule, "slot5", 0.25);
+
+  let slot5Card = null;
+
+  if (!trainerUsed && Math.random() < trainerChance) {
+    slot5Card = pickUniqueCard(
+      pools.lowTrainer,
+      usedCardIds
+    );
+  }
+
+  if (!slot5Card) {
+    slot5Card = pickUniqueCard(
+      pools.slot5NonTrainer,
+      usedCardIds
+    );
+  }
+
+  addCard(slot5Card);
+
+  // Safety fallback: avoid duplicate cards, extra trainer if already used,
+  // and additional R/RR/high-rarity cards.
+  while (packCards.length < 5) {
+    const trainerAlreadyUsed = packCards.some(card => isTrainer(card));
+    const fallbackPool = trainerAlreadyUsed
+      ? pools.anyNonTrainerNonHit
+      : pools.anyNonHit;
+
+    const fallback = pickUniqueCard(
+      fallbackPool,
+      usedCardIds
+    );
+
+    if (!fallback) {
       break;
     }
 
-    cards.push(fillCard);
+    addCard(fallback);
   }
 
-  return cards.slice(0, packsPerBox);
+  return packCards;
 }
 
-function pickFixedInclusionCards(pools, fixedRule, excludedCardIdsInBox) {
-  const count = fixedRule.count || 1;
-  const candidates = getCandidatesByFixedRule(pools, fixedRule)
-    .filter(card => !excludedCardIdsInBox.has(getCardKey(card)));
+function buildCardPools(cards) {
+  const nonHitCards = cards.filter(card => {
+    return !isBoxHitCard(card);
+  });
 
-  const picked = [];
+  const slot123 = nonHitCards.filter(card => {
+    return !isTrainer(card) && ["C", "U"].includes(card.rarity);
+  });
 
-  if (candidates.length === 0) {
-    console.warn("fixed inclusion skipped: no candidates", fixedRule);
-    return picked;
+  const slot4NonTrainer = nonHitCards.filter(card => {
+    return !isTrainer(card) && ["C", "U"].includes(card.rarity);
+  });
+
+  const slot5NonTrainer = nonHitCards.filter(card => {
+    return !isTrainer(card) && ["C", "U"].includes(card.rarity);
+  });
+
+  const lowTrainer = nonHitCards.filter(card => {
+    return isTrainer(card);
+  });
+
+  return {
+    all: cards,
+
+    slot123: slot123.length > 0
+      ? slot123
+      : nonHitCards.filter(card => !isTrainer(card)),
+
+    slot4NonTrainer: slot4NonTrainer.length > 0
+      ? slot4NonTrainer
+      : nonHitCards.filter(card => !isTrainer(card)),
+
+    slot5NonTrainer: slot5NonTrainer.length > 0
+      ? slot5NonTrainer
+      : nonHitCards.filter(card => !isTrainer(card)),
+
+    lowTrainer,
+
+    anyNonHit: nonHitCards,
+    anyNonTrainerNonHit: nonHitCards.filter(card => !isTrainer(card)),
+
+    r: cards.filter(card => card.rarity === "R"),
+    rr: cards.filter(card => card.rarity === "RR"),
+
+    rrMegaEx: cards.filter(card => {
+      return card.rarity === "RR" && isMegaExRr(card);
+    }),
+
+    rrNormalEx: cards.filter(card => {
+      return card.rarity === "RR" && isNormalExRr(card);
+    }),
+
+    ar: cards.filter(card => card.rarity === "AR"),
+
+    goodsSr: cards.filter(card => isGoodsSr(card)),
+
+    boxHit: cards.filter(card => {
+      return BOX_HIT_RARITY_VALUES.has(card.rarity);
+    })
+  };
+}
+
+function pickBoxRrCards(pools, rrCount, blockedIds = new Set()) {
+  const pickedCards = [];
+  const localBlockedIds = new Set(blockedIds);
+
+  // Basic target: 2 mega/primal ex RR.
+  const megaExCards = pickManyUniqueCards(
+    pools.rrMegaEx,
+    Math.min(2, rrCount),
+    localBlockedIds
+  );
+
+  for (const card of megaExCards) {
+    pickedCards.push(card);
+    localBlockedIds.add(getCardId(card));
   }
 
-  const localExcluded = new Set();
+  // Basic target: 2 normal ex RR.
+  const normalExTargetCount = Math.min(2, rrCount - pickedCards.length);
 
-  for (let i = 0; i < count; i++) {
-    const availableCandidates = candidates.filter(card => {
-      return !localExcluded.has(getCardKey(card));
+  const normalExCards = pickManyUniqueCards(
+    pools.rrNormalEx,
+    normalExTargetCount,
+    localBlockedIds
+  );
+
+  for (const card of normalExCards) {
+    pickedCards.push(card);
+    localBlockedIds.add(getCardId(card));
+  }
+
+  // Fallback if the master has insufficient rrKind classification.
+  while (pickedCards.length < Math.min(4, rrCount)) {
+    const fallback = pickUniqueCard(
+      pools.rr,
+      localBlockedIds
+    );
+
+    if (!fallback) {
+      break;
+    }
+
+    pickedCards.push(fallback);
+    localBlockedIds.add(getCardId(fallback));
+  }
+
+  // 5th RR, if any, from remaining RR regardless of mega/normal.
+  if (rrCount >= 5) {
+    const extra = pickUniqueCard(
+      pools.rr,
+      localBlockedIds
+    );
+
+    if (extra) {
+      pickedCards.push(extra);
+      localBlockedIds.add(getCardId(extra));
+    }
+  }
+
+  return pickedCards;
+}
+
+function pickFixedBoxInclusionCards(pools, packRule, blockedIds) {
+  const inclusions = Array.isArray(packRule.fixedBoxInclusions)
+    ? packRule.fixedBoxInclusions
+    : [];
+
+  const pickedCards = [];
+
+  for (const inclusion of inclusions) {
+    if (inclusion.enabled === false) {
+      continue;
+    }
+
+    const count = Number(inclusion.count || 1);
+
+    const pool = pools.all.filter(card => {
+      return matchesInclusion(card, inclusion);
     });
 
-    const targetCandidates =
-      availableCandidates.length > 0 ? availableCandidates : candidates;
+    const cards = pickManyUniqueCards(
+      pool,
+      count,
+      blockedIds
+    );
 
-    const card = pickRandom(targetCandidates);
-
-    if (card) {
-      picked.push(card);
-      localExcluded.add(getCardKey(card));
+    for (const card of cards) {
+      pickedCards.push(card);
+      blockedIds.add(getCardId(card));
     }
   }
 
-  return picked;
+  return pickedCards;
 }
 
-function getCandidatesByFixedRule(pools, fixedRule) {
-  const basePool = pools[fixedRule.rarity] || [];
+function matchesInclusion(card, inclusion) {
+  if (inclusion.rarity && card.rarity !== inclusion.rarity) {
+    return false;
+  }
 
-  return basePool.filter(card => {
-    if (fixedRule.category && card.category !== fixedRule.category) {
-      return false;
-    }
+  if (inclusion.category && card.category !== inclusion.category) {
+    return false;
+  }
 
-    if (fixedRule.trainerType && card.trainerType !== fixedRule.trainerType) {
-      return false;
-    }
+  if (inclusion.trainerType && card.trainerType !== inclusion.trainerType) {
+    return false;
+  }
 
-    if (fixedRule.pokemonType && card.pokemonType !== fixedRule.pokemonType) {
-      return false;
-    }
+  if (inclusion.pokemonType && card.pokemonType !== inclusion.pokemonType) {
+    return false;
+  }
 
-    if (fixedRule.nameIncludes && !card.name.includes(fixedRule.nameIncludes)) {
-      return false;
-    }
+  if (inclusion.name && card.name !== inclusion.name) {
+    return false;
+  }
 
-    return true;
-  });
+  return true;
 }
 
-function pickBoxHitCard(pools, weightedRarities, excludedCardIdsInBox) {
-  const availableItems = weightedRarities.filter(item => {
-    const pool = pools[item.rarity];
-
-    if (!item.weight || item.weight <= 0 || !pool || pool.length === 0) {
-      return false;
-    }
-
-    return pool.some(card => !excludedCardIdsInBox.has(getCardKey(card)));
-  });
-
-  if (availableItems.length === 0) {
-    return pickFromPool(pools, "SR↑", excludedCardIdsInBox);
-  }
-
-  const totalWeight = availableItems.reduce((sum, item) => sum + item.weight, 0);
-  let rand = Math.random() * totalWeight;
-
-  for (const item of availableItems) {
-    rand -= item.weight;
-
-    if (rand <= 0) {
-      return pickFromPool(pools, item.rarity, excludedCardIdsInBox);
-    }
-  }
-
-  return pickFromPool(
-    pools,
-    availableItems[availableItems.length - 1].rarity,
-    excludedCardIdsInBox
+function assignCardsToRandomPacks(cards, packsPerBox) {
+  const assignments = new Map();
+  const indexes = shuffleArray(
+    Array.from({ length: packsPerBox }, (_, index) => index)
   );
+
+  cards.forEach((card, index) => {
+    const packIndex = indexes[index];
+
+    if (packIndex === undefined) {
+      return;
+    }
+
+    assignments.set(packIndex, card);
+  });
+
+  return assignments;
 }
 
-function getRarityCount(countRule) {
-  if (typeof countRule.count === "number") {
-    return countRule.count;
+function pickUniqueCard(pool, blockedIds = new Set()) {
+  if (!Array.isArray(pool) || pool.length === 0) {
+    return null;
   }
 
-  if (countRule.countDistribution) {
-    return pickCount(countRule.countDistribution, 0);
+  const candidates = pool.filter(card => {
+    return !blockedIds.has(getCardId(card));
+  });
+
+  if (candidates.length === 0) {
+    return null;
+  }
+
+  return pickRandom(candidates);
+}
+
+function pickManyUniqueCards(pool, count, blockedIds = new Set()) {
+  const pickedCards = [];
+  const localBlockedIds = new Set(blockedIds);
+
+  for (let i = 0; i < count; i += 1) {
+    const card = pickUniqueCard(pool, localBlockedIds);
+
+    if (!card) {
+      break;
+    }
+
+    pickedCards.push(card);
+    localBlockedIds.add(getCardId(card));
+  }
+
+  return pickedCards;
+}
+
+function pickRandom(items) {
+  if (!Array.isArray(items) || items.length === 0) {
+    return null;
+  }
+
+  return items[Math.floor(Math.random() * items.length)];
+}
+
+function shuffleArray(items) {
+  const copiedItems = [...items];
+
+  for (let i = copiedItems.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copiedItems[i], copiedItems[j]] = [copiedItems[j], copiedItems[i]];
+  }
+
+  return copiedItems;
+}
+
+function pickCountFromDistribution(distribution, fallback) {
+  if (distribution === null || distribution === undefined) {
+    return pickCountFromDistribution(fallback, 0);
+  }
+
+  if (typeof distribution === "number") {
+    return distribution;
+  }
+
+  if (Array.isArray(distribution)) {
+    const items = distribution
+      .map(item => {
+        if (typeof item === "number") {
+          return {
+            count: item,
+            weight: 1
+          };
+        }
+
+        return {
+          count: Number(item.count ?? item.value ?? 0),
+          weight: Number(item.weight ?? item.rate ?? item.probability ?? 1)
+        };
+      })
+      .filter(item => Number.isFinite(item.count) && item.weight > 0);
+
+    return pickWeightedCount(items, 0);
+  }
+
+  if (typeof distribution === "object") {
+    const items = Object.entries(distribution)
+      .map(([count, weight]) => {
+        return {
+          count: Number(count),
+          weight: Number(weight)
+        };
+      })
+      .filter(item => Number.isFinite(item.count) && item.weight > 0);
+
+    return pickWeightedCount(items, 0);
   }
 
   return 0;
 }
 
-function pickCount(countDistribution, defaultCount) {
-  if (!countDistribution || countDistribution.length === 0) {
-    return defaultCount;
+function pickWeightedCount(items, fallback) {
+  if (!Array.isArray(items) || items.length === 0) {
+    return fallback;
   }
 
-  const totalWeight = countDistribution.reduce((sum, item) => sum + item.weight, 0);
-  let rand = Math.random() * totalWeight;
+  const totalWeight = items.reduce((sum, item) => {
+    return sum + item.weight;
+  }, 0);
 
-  for (const item of countDistribution) {
-    rand -= item.weight;
+  let randomValue = Math.random() * totalWeight;
 
-    if (rand <= 0) {
+  for (const item of items) {
+    randomValue -= item.weight;
+
+    if (randomValue <= 0) {
       return item.count;
     }
   }
 
-  return countDistribution[countDistribution.length - 1].count;
+  return items[items.length - 1].count;
+}
+
+function getRuleValue(object, paths) {
+  for (const path of paths) {
+    let current = object;
+
+    for (const key of path) {
+      if (current === null || current === undefined) {
+        break;
+      }
+
+      current = current[key];
+    }
+
+    if (current !== null && current !== undefined) {
+      return current;
+    }
+  }
+
+  return undefined;
+}
+
+function getPacksPerBox(packRule) {
+  return Number(
+    getRuleValue(packRule, [
+      ["packsPerBox"],
+      ["boxRules", "packsPerBox"],
+      ["box", "packsPerBox"]
+    ]) || 30
+  );
+}
+
+function getSlotTrainerChance(packRule, slotName, fallback) {
+  const value = getRuleValue(packRule, [
+    ["slotRules", slotName, "trainerChance"],
+    ["packRules", slotName, "trainerChance"],
+    ["trainerChance"]
+  ]);
+
+  if (value === undefined || value === null) {
+    return fallback;
+  }
+
+  return Number(value);
+}
+
+function getCardId(card) {
+  return String(
+    card.officialCardId ||
+    `${card.setCode || ""}_${card.cardNo || ""}_${card.rarity || ""}_${card.name || ""}`
+  );
+}
+
+function isTrainer(card) {
+  return card.category === "trainer";
+}
+
+function isHighRarity(card) {
+  return HIGH_RARITY_VALUES.has(card.rarity);
+}
+
+function isBoxHitCard(card) {
+  return (
+    isHighRarity(card) ||
+    card.rarity === "R" ||
+    card.rarity === "RR"
+  );
+}
+
+function isGoodsSr(card) {
+  if (card.rarity !== "SR") {
+    return false;
+  }
+
+  if (card.category !== "trainer") {
+    return false;
+  }
+
+  const trainerType = String(card.trainerType || "");
+
+  return (
+    trainerType === "グッズ" ||
+    trainerType === "どうぐ" ||
+    trainerType === "ポケモンのどうぐ"
+  );
+}
+
+function isMegaExRr(card) {
+  if (card.rrKind === "megaEx") {
+    return true;
+  }
+
+  const name = String(card.name || "");
+
+  return (
+    card.rarity === "RR" &&
+    name.endsWith("ex") &&
+    (
+      name.startsWith("メガ") ||
+      name.startsWith("ゲンシ")
+    )
+  );
+}
+
+function isNormalExRr(card) {
+  if (card.rrKind === "normalEx") {
+    return true;
+  }
+
+  if (card.rarity !== "RR") {
+    return false;
+  }
+
+  const name = String(card.name || "");
+
+  return name.endsWith("ex") && !isMegaExRr(card);
 }
 
 export function createCardSummary(packs) {
-  const countMap = new Map();
+  const summaryMap = new Map();
 
-  packs.flatMap(pack => pack.cards).forEach(card => {
-    const key = getCardKey(card);
+  for (const pack of packs) {
+    for (const card of pack.cards) {
+      const cardId = getCardId(card);
 
-    if (!countMap.has(key)) {
-      countMap.set(key, {
-        card,
-        count: 0
-      });
+      if (!summaryMap.has(cardId)) {
+        summaryMap.set(cardId, {
+          card,
+          count: 0
+        });
+      }
+
+      summaryMap.get(cardId).count += 1;
     }
+  }
 
-    countMap.get(key).count++;
-  });
-
-  return Array.from(countMap.values()).sort((a, b) => {
+  return Array.from(summaryMap.values()).sort((a, b) => {
     return compareCards(a.card, b.card);
   });
 }
 
-export function groupSummaryByRarity(summary) {
-  const grouped = {};
-
-  summary.forEach(item => {
-    const rarity = item.card.rarity;
-
-    if (!grouped[rarity]) {
-      grouped[rarity] = [];
-    }
-
-    grouped[rarity].push(item);
-  });
-
-  return grouped;
-}
-
 export function createBoxSummary(packs) {
-  const summary = createCardSummary(packs);
-  const rarityCounts = {};
+  const summary = {};
 
-  summary.forEach(item => {
-    const rarity = item.card.rarity;
-
-    if (!rarityCounts[rarity]) {
-      rarityCounts[rarity] = 0;
+  for (const pack of packs) {
+    for (const card of pack.cards) {
+      const rarity = card.rarity || "不明";
+      summary[rarity] = (summary[rarity] || 0) + 1;
     }
+  }
 
-    rarityCounts[rarity] += item.count;
-  });
-
-  return rarityCounts;
+  return summary;
 }
 
 export function sortCards(cards) {
   return [...cards].sort(compareCards);
 }
 
-function pickFromPool(pools, rarityOrGroup, excludedCardIds) {
-  const pool = pools[rarityOrGroup];
-
-  if (!pool || pool.length === 0) {
-    return null;
-  }
-
-  let candidates = pool.filter(card => !excludedCardIds.has(getCardKey(card)));
-
-  if (candidates.length === 0) {
-    candidates = pool;
-  }
-
-  return pickRandom(candidates);
-}
-
-function pickRandom(cards) {
-  if (!cards || cards.length === 0) {
-    return null;
-  }
-
-  const index = Math.floor(Math.random() * cards.length);
-  return cards[index];
-}
-
-function shouldAvoidDuplicateInBox(rarity, boxRules, countRule) {
-  if (countRule.allowDuplicates === true) {
-    return false;
-  }
-
-  if (countRule.avoidDuplicateInBox === true) {
-    return true;
-  }
-
-  const targetGroups = boxRules.avoidDuplicateInBoxForRarityGroups || [];
-  const rarityGroup = getRarityGroup(rarity);
-
-  return targetGroups.includes(rarity) || targetGroups.includes(rarityGroup);
-}
-
 function compareCards(a, b) {
-  const cardNoDiff = toCardNoNumber(a.cardNo) - toCardNoNumber(b.cardNo);
+  const aNo = Number(a.cardNo || 9999);
+  const bNo = Number(b.cardNo || 9999);
 
-  if (cardNoDiff !== 0) {
-    return cardNoDiff;
+  if (aNo !== bNo) {
+    return aNo - bNo;
   }
 
-  const rarityDiff = getRaritySortIndex(a.rarity) - getRaritySortIndex(b.rarity);
+  const aRarityIndex = getRarityIndex(a.rarity);
+  const bRarityIndex = getRarityIndex(b.rarity);
 
-  if (rarityDiff !== 0) {
-    return rarityDiff;
+  if (aRarityIndex !== bRarityIndex) {
+    return aRarityIndex - bRarityIndex;
   }
 
-  return String(a.name).localeCompare(String(b.name), "ja");
+  return String(a.name || "").localeCompare(String(b.name || ""), "ja");
 }
 
-function getRaritySortIndex(rarity) {
-  const index = RARITY_DISPLAY_ORDER.indexOf(rarity);
+function getRarityIndex(rarity) {
+  const index = RARITY_DISPLAY_ORDER.indexOf(rarity || "不明");
   return index === -1 ? 999 : index;
-}
-
-function toCardNoNumber(cardNo) {
-  const value = Number(cardNo);
-
-  if (Number.isNaN(value)) {
-    return 9999;
-  }
-
-  return value;
-}
-
-function getCardKey(card) {
-  return card.officialCardId || `${card.setCode}-${card.cardNo}-${card.name}-${card.rarity}`;
-}
-
-function shuffleArray(array) {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-
-  return array;
 }
