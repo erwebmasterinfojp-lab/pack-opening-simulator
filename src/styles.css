@@ -860,3 +860,26 @@ body.modal-open {
   overflow: hidden;
   background: transparent;
 }
+
+/* =========================
+   Count Badge Fix
+========================= */
+
+.summary-grid .card-count-badge {
+  top: 4px;
+  right: 4px;
+  min-width: 30px;
+  padding: 4px 7px;
+  font-size: 0.9rem;
+  line-height: 1.1;
+}
+
+@media (max-width: 640px) {
+  .summary-grid .card-count-badge {
+    top: 4px;
+    right: 4px;
+    min-width: 28px;
+    padding: 3px 6px;
+    font-size: 0.82rem;
+  }
+}
