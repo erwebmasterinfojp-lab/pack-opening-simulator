@@ -18,4 +18,4 @@ pack-opening-simulator/
 └── tools/
     └── fetch_card_master.py
 ```
-
+0709 dployment attempt
