@@ -95,12 +95,20 @@
       <div id="box-summary"></div>
     </section>
 
-    <section id="summary-panel" class="panel hidden">
-      <div class="section-heading">
-        <p class="section-kicker">Result Summary</p>
-        <h2>カード別集計</h2>
-      </div>
-      <div id="summary"></div>
+    <section id="summary-panel" class="panel hidden filter-panel">
+      <details class="filter-details">
+        <summary class="filter-summary">
+          <div>
+            <p class="section-kicker">Result Summary</p>
+            <h2>カード別集計</h2>
+          </div>
+          <span class="filter-summary__icon">開く</span>
+        </summary>
+
+        <div class="filter-content">
+          <div id="summary"></div>
+        </div>
+      </details>
     </section>
 
     <section id="result-panel" class="panel hidden">

@@ -712,3 +712,151 @@ body.modal-open {
     top: -10px;
   }
 }
+
+/* =========================
+   Review Fixes
+   1. Card image frame
+   2. Hide box summary UI
+   3. 3 columns on smartphone
+========================= */
+
+/* 2. 封入内訳はUI上だけ非表示。
+   検証用にDOMとJS処理は残す。再表示したい場合はこの指定を削除する。 */
+#box-summary-panel {
+  display: none !important;
+}
+
+/* カード画像の表示比率をポケカ実寸に寄せる */
+:root {
+  --pokemon-card-ratio: 63 / 88;
+  --card-thumbnail-radius: 7px;
+  --card-thumbnail-zoom: 1.0;
+}
+
+/* カード周囲の余白・淡い背景をできるだけ消す */
+.card-tile.image-only-card {
+  position: relative;
+  overflow: visible;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* カード画像そのものの枠 */
+.image-only-card .card-tile__image {
+  position: relative;
+  aspect-ratio: var(--pokemon-card-ratio);
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--card-thumbnail-radius);
+  background: transparent;
+  box-shadow: 0 3px 8px rgba(15, 23, 42, 0.14);
+}
+
+/* 1. ここが重要：
+   以前の padding: 8px / object-fit: contain による余白を消す */
+.image-only-card .card-tile__image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0 !important;
+  object-fit: cover;
+  transform: scale(var(--card-thumbnail-zoom));
+  transform-origin: center center;
+}
+
+/* 画像エラー時だけ最低限の背景を出す */
+.card-tile__image.is-error {
+  background:
+    linear-gradient(135deg, rgba(37, 99, 235, 0.16), rgba(22, 163, 74, 0.12)),
+    #f8fafc;
+}
+
+.card-tile__image.is-error img {
+  display: none;
+}
+
+.card-tile__image.is-error .card-tile__fallback {
+  display: flex;
+}
+
+/* 枚数バッジを少しカード寄りに調整 */
+.card-count-badge {
+  right: -4px;
+  top: -5px;
+  min-width: 34px;
+  padding: 4px 8px;
+  font-size: 1rem;
+  line-height: 1.1;
+  background: rgba(15, 23, 42, 0.92);
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.22);
+}
+
+/* PC/タブレット側のカード一覧 */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(122px, 1fr));
+  gap: 14px;
+}
+
+.pack-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+  gap: 12px;
+}
+
+/* 3. スマホは1行3枚 */
+@media (max-width: 640px) {
+  .summary-grid,
+  .pack-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 9px;
+  }
+
+  .pack-card {
+    padding: 12px;
+  }
+
+  .card-count-badge {
+    right: -3px;
+    top: -5px;
+    min-width: 28px;
+    padding: 3px 6px;
+    font-size: 0.88rem;
+  }
+}
+
+/* iPhoneなど狭め画面ではさらに詰める */
+@media (max-width: 430px) {
+  .summary-grid,
+  .pack-grid {
+    gap: 8px;
+  }
+
+  .pack-card {
+    padding: 10px;
+  }
+}
+
+/* モーダル側は拡大確認が目的なので、画像全体を見せる */
+.card-modal__image {
+  object-fit: contain;
+  transform: none;
+  background: transparent;
+}
+
+/* =========================
+   Modal Card Image Crop
+========================= */
+
+.card-modal__image {
+  width: min(92vw, 430px);
+  aspect-ratio: var(--pokemon-card-ratio);
+  max-height: 82vh;
+  object-fit: cover;
+  object-position: center center;
+  transform: scale(1.0);
+  transform-origin: center center;
+  overflow: hidden;
+  background: transparent;
+}
