@@ -38,24 +38,11 @@
           "weight": 5
         }
       ],
-      "weightedRarities": [
-        {
-          "rarity": "SR",
-          "weight": 79
-        },
-        {
-          "rarity": "SAR",
-          "weight": 13
-        },
-        {
-          "rarity": "UR",
-          "weight": 7
-        },
-        {
-          "rarity": "MUR",
-          "weight": 1
-        }
-      ],
+      "rarityWeights": {
+        "SR": 94,
+        "SAR": 24,
+        "MUR": 2
+      },
       "extraHitRCountAdjustment": -1
     },
 
