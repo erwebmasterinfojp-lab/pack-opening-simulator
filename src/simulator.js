@@ -150,7 +150,9 @@ function createBoxPlan(pools, packRule) {
     packRule,
     blockedBoxHitIds
   ).filter(card => {
-    return !isGoodsSr(card);
+    // SR・SAR・MURなどの高レアは、必ず後段の重み付き抽選で制御する。
+    // fixedBoxInclusionsから高レアが混ざると、抽選回数が増えてしまうため除外。
+    return !BOX_HIT_RARITY_VALUES.has(card.rarity);
   });
 
   for (const card of fixedCards) {
@@ -210,18 +212,138 @@ function createBoxPlan(pools, packRule) {
   // Goods/tool SR is completely excluded here so only one goods/tool SR can
   // appear in a box. Support SR remains available.
   const boxHitPool = pools.boxHit.filter(card => {
+    // グッズ・どうぐSRは別途1BOX1枚で制御済み。
+    // サポートSRは通常高レア抽選に残す。
     return !isGoodsSr(card);
   });
 
-  const boxHitCards = pickManyUniqueCards(
+  const boxHitCards = pickWeightedBoxHitCards(
     boxHitPool,
     boxHitCount,
+    packRule,
     blockedBoxHitIds
   );
 
-  for (const card of boxHitCards) {
+for (const card of boxHitCards) {
     blockedBoxHitIds.add(getCardId(card));
   }
+
+  function pickWeightedBoxHitCards(
+  pool,
+  count,
+  packRule,
+  blockedIds = new Set()
+) {
+  const pickedCards = [];
+  const localBlockedIds = new Set(blockedIds);
+
+  const rarityWeights = getBoxHitRarityWeights(packRule);
+
+  if (!rarityWeights || Object.keys(rarityWeights).length === 0) {
+    throw new Error(
+      "高レア抽選設定 boxHit.rarityWeights が見つかりません。data/rules/{setCode}.json を確認してください。"
+    );
+  }
+
+  for (let i = 0; i < count; i += 1) {
+    const availableCards = pool.filter(card => {
+      return !localBlockedIds.has(getCardId(card));
+    });
+
+    if (availableCards.length === 0) {
+      break;
+    }
+
+    const selectedRarity = pickWeightedRarity(
+      availableCards,
+      rarityWeights
+    );
+
+    if (!selectedRarity) {
+      console.warn(
+        "抽選可能な高レアリティがありません。",
+        {
+          rarityWeights,
+          availableRarities: [
+            ...new Set(availableCards.map(card => card.rarity))
+          ]
+        }
+      );
+      break;
+    }
+
+    const rarityPool = availableCards.filter(card => {
+      return card.rarity === selectedRarity;
+    });
+
+    const selectedCard = pickUniqueCard(
+      rarityPool,
+      localBlockedIds
+    );
+
+    if (!selectedCard) {
+      continue;
+    }
+
+    pickedCards.push(selectedCard);
+    localBlockedIds.add(getCardId(selectedCard));
+  }
+
+  return pickedCards;
+}
+
+function pickWeightedRarity(cards, rarityWeights) {
+  if (!Array.isArray(cards) || cards.length === 0) {
+    return null;
+  }
+
+  const availableRarities = new Set(
+    cards.map(card => card.rarity)
+  );
+
+  const weightedItems = Object.entries(rarityWeights)
+    .map(([rarity, weight]) => {
+      return {
+        rarity,
+        weight: Number(weight)
+      };
+    })
+    .filter(item => {
+      return (
+        availableRarities.has(item.rarity) &&
+        Number.isFinite(item.weight) &&
+        item.weight > 0
+      );
+    });
+
+  if (weightedItems.length === 0) {
+    return null;
+  }
+
+  const totalWeight = weightedItems.reduce((sum, item) => {
+    return sum + item.weight;
+  }, 0);
+
+  let randomValue = Math.random() * totalWeight;
+
+  for (const item of weightedItems) {
+    randomValue -= item.weight;
+
+    if (randomValue <= 0) {
+      return item.rarity;
+    }
+  }
+
+  return weightedItems[weightedItems.length - 1].rarity;
+}
+
+function getBoxHitRarityWeights(packRule) {
+  return getRuleValue(packRule, [
+    ["boxRules", "boxHit", "rarityWeights"],
+    ["boxHit", "rarityWeights"],
+    ["boxHitRarityWeights"]
+  ]);
+}
 
   // RR: basic target is 2 mega/primal ex + 2 normal ex.
   // If a 5th RR appears, it is chosen from the remaining RR cards.
