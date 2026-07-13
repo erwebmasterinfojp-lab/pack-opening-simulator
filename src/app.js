@@ -85,6 +85,19 @@ const summaryDiv = document.getElementById("summary");
 const resultPanel = document.getElementById("result-panel");
 const resultDiv = document.getElementById("result");
 
+const preOpeningAd = document.getElementById("pre-opening-ad");
+const preOpeningAdContinue = document.getElementById("pre-opening-ad-continue");
+const preOpeningAdCountdown = document.getElementById("pre-opening-ad-countdown");
+
+const openingOverlay = document.getElementById("opening-overlay");
+const openingOverlayTitle = document.getElementById("opening-overlay-title");
+const openingOverlayText = document.getElementById("opening-overlay-text");
+
+const PRE_OPENING_AD_SECONDS = 3;
+const OPENING_ANIMATION_MS = 2000;
+
+let isOpeningAnimationRunning = false;
+
 const open15Button = document.getElementById("open-15-packs");
 const open30Button = document.getElementById("open-30-packs");
 
@@ -234,15 +247,120 @@ function enableOpenButtons() {
   open30Button.disabled = false;
 }
 
-function handleOpenPacks(packCount) {
-  currentPacks = openPacks(cards, packCount, packRule);
+async function handleOpenPacks(packCount) {
+  if (isOpeningAnimationRunning) {
+    return;
+  }
 
-  filterPanel.classList.remove("hidden");
-  boxSummaryPanel.classList.remove("hidden");
-  summaryPanel.classList.remove("hidden");
-  resultPanel.classList.remove("hidden");
+  isOpeningAnimationRunning = true;
+  disableOpenButtons();
 
-  updateDisplayedResults();
+  try {
+    // 結果は先に生成しておくが、演出終了まで表示しない
+    currentPacks = openPacks(cards, packCount, packRule);
+
+    filterPanel.classList.add("hidden");
+    boxSummaryPanel.classList.add("hidden");
+    summaryPanel.classList.add("hidden");
+    resultPanel.classList.add("hidden");
+
+    await showPreOpeningAd();
+    await playOpeningAnimation(packCount);
+
+    filterPanel.classList.remove("hidden");
+    boxSummaryPanel.classList.remove("hidden");
+    summaryPanel.classList.remove("hidden");
+    resultPanel.classList.remove("hidden");
+
+    updateDisplayedResults();
+  } finally {
+    enableOpenButtons();
+    isOpeningAnimationRunning = false;
+  }
+}
+
+function wait(ms) {
+  return new Promise(resolve => {
+    setTimeout(resolve, ms);
+  });
+}
+
+async function showPreOpeningAd() {
+  if (!preOpeningAd || !preOpeningAdContinue) {
+    return;
+  }
+
+  preOpeningAd.classList.remove("hidden");
+  preOpeningAd.setAttribute("aria-hidden", "false");
+  document.body.classList.add("modal-open");
+
+  preOpeningAdContinue.disabled = true;
+
+  for (let seconds = PRE_OPENING_AD_SECONDS; seconds > 0; seconds -= 1) {
+    if (preOpeningAdCountdown) {
+      preOpeningAdCountdown.textContent =
+        `ローディング中...${seconds}`;
+    }
+
+    await wait(1000);
+  }
+
+  if (preOpeningAdCountdown) {
+    preOpeningAdCountdown.textContent =
+      "準備完了！";
+  }
+
+  preOpeningAdContinue.disabled = false;
+
+  await new Promise(resolve => {
+    const handleClick = () => {
+      preOpeningAdContinue.removeEventListener("click", handleClick);
+
+      preOpeningAd.classList.add("hidden");
+      preOpeningAd.setAttribute("aria-hidden", "true");
+      document.body.classList.remove("modal-open");
+
+      resolve();
+    };
+
+    preOpeningAdContinue.addEventListener("click", handleClick);
+  });
+}
+
+async function playOpeningAnimation(packCount) {
+  if (!openingOverlay) {
+    return;
+  }
+
+  const isBoxOpening = packCount >= 30;
+
+  if (openingOverlayTitle) {
+    openingOverlayTitle.textContent = isBoxOpening
+      ? "1BOX開封中..."
+      : "15パック開封中...";
+  }
+
+  if (openingOverlayText) {
+    openingOverlayText.textContent = isBoxOpening
+      ? "BOXの中身を確認しています..."
+      : "15パックを開封しています...";
+  }
+
+  openingOverlay.classList.remove("hidden", "is-finishing");
+  openingOverlay.classList.add("is-playing");
+  openingOverlay.setAttribute("aria-hidden", "false");
+  document.body.classList.add("modal-open");
+
+  await wait(OPENING_ANIMATION_MS);
+
+  openingOverlay.classList.add("is-finishing");
+
+  await wait(450);
+
+  openingOverlay.classList.remove("is-playing", "is-finishing");
+  openingOverlay.classList.add("hidden");
+  openingOverlay.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("modal-open");
 }
 
 function updateDisplayedResults() {

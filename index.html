@@ -22,7 +22,7 @@
   <main class="page">
     <section class="panel set-panel">
       <div class="section-heading">
-        <h2>パックシリーズ</h2>
+        <h2>拡張パック</h2>
       </div>
 
       <div id="set-list" class="set-list"></div>
@@ -43,10 +43,6 @@
           1BOX開封
         </button>
       </div>
-
-      <p class="help-text">
-        ※ 現在は仮のカード画像を全カード共通で表示しています。
-      </p>
     </section>
 
     <section id="filter-panel" class="panel hidden filter-panel">
@@ -118,7 +114,79 @@
       </div>
       <div id="result"></div>
     </section>
+
+    <section class="panel ad-banner-panel">
+      <p class="ad-banner-panel__label">広告</p>
+
+      <div class="ad-slot ad-slot--banner">
+        <div>
+          <strong>バナー広告枠</strong>
+          <p>ここにAdSense等のバナー広告タグを配置します。</p>
+        </div>
+      </div>
+    </section>
   </main>
+
+  <div id="pre-opening-ad" class="ad-modal hidden" aria-hidden="true">
+    <div class="ad-modal__backdrop"></div>
+
+    <div class="ad-modal__content">
+      <p class="ad-modal__label">広告</p>
+
+      <div class="ad-slot ad-slot--interstitial">
+        <div>
+          <strong>広告枠</strong>
+          <p>ここにAdSense等の広告タグを配置します。</p>
+        </div>
+      </div>
+
+      <p id="pre-opening-ad-countdown" class="ad-modal__countdown">
+        まもなく開封演出へ進みます...
+      </p>
+
+      <button
+        id="pre-opening-ad-continue"
+        class="ad-modal__button"
+        type="button"
+        disabled
+      >
+        パック開封
+      </button>
+    </div>
+  </div>
+
+  <div id="opening-overlay" class="opening-overlay hidden" aria-hidden="true">
+    <div class="opening-overlay__backdrop"></div>
+
+    <div class="opening-overlay__content">
+      <p class="opening-overlay__kicker">Opening</p>
+      <h2 id="opening-overlay-title">開封中...</h2>
+
+      <div class="opening-pack-stage">
+        <div class="opening-glow"></div>
+
+        <div class="opening-pack">
+          <div class="opening-pack__shine"></div>
+          <div class="opening-pack__title">POKÉCA</div>
+          <div class="opening-pack__subtitle">PACK</div>
+        </div>
+
+        <div class="opening-cards">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+
+      <p id="opening-overlay-text" class="opening-overlay__text">
+        パックを開封しています...
+      </p>
+
+      <div class="opening-progress">
+        <div class="opening-progress__bar"></div>
+      </div>
+    </div>
+  </div>
 
   <div id="card-modal" class="card-modal hidden" aria-hidden="true">
   <div class="card-modal__backdrop"></div>
