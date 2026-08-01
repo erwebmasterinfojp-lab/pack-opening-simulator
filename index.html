@@ -4,22 +4,32 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>ポケカ シールド戦 開封シミュレーター</title>
+  <title>ポケモンカードゲーム パック 開封シミュレーター</title>
 
   <link rel="stylesheet" href="./src/styles.css" />
 </head>
+
 <body>
   <header class="site-header">
     <div class="site-header__inner">
       <p class="site-kicker">Pokémon Card Fan Tool</p>
-      <h1>シールド戦 開封シミュレーター</h1>
+
+      <nav class="site-nav" aria-label="サイト内ナビゲーション">
+        <a class="site-nav__link" href="./disclaimer.html">
+          免責事項
+        </a>
+      </nav>
+
+      <h1>ポケカ パック 開封シミュレーション</h1>
+
       <p class="site-lead">
-        1BOX・15パック開封をシミュレーションし、カード別の枚数を確認できます。
+        1BOX・15パック開封をシミュレーションし、カード別/タイプ別の枚数を確認可能！シールド戦のデッキ構築や、パック開封前の運試しにご活用ください！
       </p>
     </div>
   </header>
 
   <main class="page">
+    <!-- 拡張パック選択 -->
     <section class="panel set-panel">
       <div class="section-heading">
         <h2>拡張パック</h2>
@@ -27,94 +37,129 @@
 
       <div id="set-list" class="set-list"></div>
 
-      <div id="status" class="status">パックシリーズ読み込み中...</div>
+      <div id="status" class="status">
+        パックシリーズ読み込み中...
+      </div>
     </section>
 
+    <!-- 開封ボタン -->
     <section class="panel control-panel">
       <div class="section-heading">
-        <h2>開封する</h2>
       </div>
 
       <div class="button-row">
-        <button id="open-15-packs" class="secondary-button" disabled>
+        <button
+          id="open-15-packs"
+          class="secondary-button"
+          type="button"
+          disabled
+        >
           15パック開封
         </button>
-        <button id="open-30-packs" class="secondary-button" disabled>
+
+        <button
+          id="open-30-packs"
+          class="secondary-button"
+          type="button"
+          disabled
+        >
           1BOX開封
         </button>
       </div>
     </section>
 
-    <section id="filter-panel" class="panel hidden filter-panel">
-      <details class="filter-details">
-        <summary class="filter-summary">
-          <div>
-            <p class="section-kicker">Filter</p>
-            <h2>表示フィルター</h2>
-          </div>
-          <span class="filter-summary__icon">開く</span>
-        </summary>
-
-        <div class="filter-content">
-          <div class="filter-block">
-            <h3>レアリティ</h3>
-            <div id="rarity-filter-buttons" class="filter-chip-row"></div>
-          </div>
-
-          <div class="filter-block">
-            <h3>ポケモンのタイプ</h3>
-            <div id="pokemon-type-filter-buttons" class="filter-chip-row"></div>
-          </div>
-
-          <div class="filter-block">
-            <h3>トレーナーズ</h3>
-            <div id="trainer-type-filter-buttons" class="filter-chip-row"></div>
-          </div>
-
-          <div class="filter-block">
-            <h3>その他</h3>
-            <div id="other-filter-buttons" class="filter-chip-row"></div>
-          </div>
-
-          <p class="help-text">
-            ※ ボタンを押すとカード別集計のみ絞り込みます。すべてOFFの場合は全カードを表示します。
-          </p>
-        </div>
-      </details>
-    </section>
-
-    <section id="box-summary-panel" class="panel hidden">
+    <!--
+      app.jsとの互換性のため残す。
+      CSSまたはhidden属性により画面には表示しない。
+    -->
+    <section
+      id="box-summary-panel"
+      class="panel hidden"
+      hidden
+      aria-hidden="true"
+    >
       <div class="section-heading">
         <p class="section-kicker">Box Summary</p>
         <h2>封入内訳</h2>
       </div>
+
       <div id="box-summary"></div>
     </section>
 
-    <section id="summary-panel" class="panel hidden filter-panel">
+    <!-- カード別集計 -->
+    <section id="summary-panel" class="panel hidden">
       <details class="filter-details">
         <summary class="filter-summary">
           <div>
             <p class="section-kicker">Result Summary</p>
             <h2>カード別集計</h2>
           </div>
+
           <span class="filter-summary__icon">開く</span>
         </summary>
 
         <div class="filter-content">
+          <!-- カード別集計にだけ適用されるフィルター -->
+          <details id="filter-panel" class="summary-filter hidden">
+            <summary class="summary-filter__summary">
+              <span>表示フィルター</span>
+            </summary>
+
+            <div class="summary-filter__content">
+              <div class="filter-group">
+                <h3>レアリティ</h3>
+
+                <div
+                  id="rarity-filter-buttons"
+                  class="filter-chip-list"
+                ></div>
+              </div>
+
+              <div class="filter-group">
+                <h3>ポケモンのタイプ</h3>
+
+                <div
+                  id="pokemon-type-filter-buttons"
+                  class="filter-chip-list"
+                ></div>
+              </div>
+
+              <div class="filter-group">
+                <h3>トレーナーズ</h3>
+
+                <div
+                  id="trainer-type-filter-buttons"
+                  class="filter-chip-list"
+                ></div>
+              </div>
+
+              <div class="filter-group">
+                <h3>その他</h3>
+
+                <div
+                  id="other-filter-buttons"
+                  class="filter-chip-list"
+                ></div>
+              </div>
+            </div>
+          </details>
+
           <div id="summary"></div>
         </div>
       </details>
     </section>
 
+    <!-- パックごとの開封結果 -->
     <section id="result-panel" class="panel hidden">
       <div class="section-heading">
         <p class="section-kicker">Pack Result</p>
         <h2>開封結果</h2>
       </div>
+
       <div id="result"></div>
     </section>
 
+    <!-- 下部バナー広告
     <section class="panel ad-banner-panel">
       <p class="ad-banner-panel__label">広告</p>
 
@@ -124,10 +169,15 @@
           <p>ここにAdSense等のバナー広告タグを配置します。</p>
         </div>
       </div>
-    </section>
+    </section> -->
   </main>
 
-  <div id="pre-opening-ad" class="ad-modal hidden" aria-hidden="true">
+  <!-- 開封前広告 -- 現在は非表示 -->
+  <div
+    id="pre-opening-ad"
+    class="ad-modal hidden"
+    aria-hidden="true"
+  >
     <div class="ad-modal__backdrop"></div>
 
     <div class="ad-modal__content">
@@ -140,8 +190,11 @@
         </div>
       </div>
 
-      <p id="pre-opening-ad-countdown" class="ad-modal__countdown">
-        まもなく開封演出へ進みます...
+      <p
+        id="pre-opening-ad-countdown"
+        class="ad-modal__countdown"
+      >
+        ローディング中...3
       </p>
 
       <button
@@ -155,12 +208,20 @@
     </div>
   </div>
 
-  <div id="opening-overlay" class="opening-overlay hidden" aria-hidden="true">
+  <!-- 開封演出 -->
+  <div
+    id="opening-overlay"
+    class="opening-overlay hidden"
+    aria-hidden="true"
+  >
     <div class="opening-overlay__backdrop"></div>
 
     <div class="opening-overlay__content">
       <p class="opening-overlay__kicker">Opening</p>
-      <h2 id="opening-overlay-title">開封中...</h2>
+
+      <h2 id="opening-overlay-title">
+        開封中...
+      </h2>
 
       <div class="opening-pack-stage">
         <div class="opening-glow"></div>
@@ -178,7 +239,10 @@
         </div>
       </div>
 
-      <p id="opening-overlay-text" class="opening-overlay__text">
+      <p
+        id="opening-overlay-text"
+        class="opening-overlay__text"
+      >
         パックを開封しています...
       </p>
 
@@ -188,19 +252,39 @@
     </div>
   </div>
 
-  <div id="card-modal" class="card-modal hidden" aria-hidden="true">
-  <div class="card-modal__backdrop"></div>
+  <!-- カード拡大モーダル -->
+  <div
+    id="card-modal"
+    class="card-modal hidden"
+    aria-hidden="true"
+  >
+    <div class="card-modal__backdrop"></div>
 
-  <div class="card-modal__content">
-    <button id="card-modal-close" class="card-modal__close" type="button">
-      ×
-    </button>
+    <div class="card-modal__content">
+      <button
+        id="card-modal-close"
+        class="card-modal__close"
+        type="button"
+        aria-label="拡大表示を閉じる"
+      >
+        ×
+      </button>
 
-    <img id="card-modal-image" class="card-modal__image" src="" alt="" />
+      <div class="card-modal__image-frame">
+        <img
+          id="card-modal-image"
+          class="card-modal__image"
+          src=""
+          alt=""
+        />
+      </div>
 
-    <div id="card-modal-caption" class="card-modal__caption"></div>
+      <div
+        id="card-modal-caption"
+        class="card-modal__caption"
+      ></div>
+    </div>
   </div>
-</div>
 
   <footer class="site-footer">
     <p>
