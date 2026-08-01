@@ -157,7 +157,7 @@ function renderSetList() {
 
         <div class="set-card__body">
           <h3>${escapeHtml(set.displayName)}</h3>
-          <p>${escapeHtml(set.description || "")}</p>
+          <!-- <p>${escapeHtml(set.description || "")}</p> -->
         </div>
       </button>
     `;
@@ -264,7 +264,7 @@ async function handleOpenPacks(packCount) {
     summaryPanel.classList.add("hidden");
     resultPanel.classList.add("hidden");
 
-    await showPreOpeningAd();
+    // await showPreOpeningAd(); 自前のパック開封前広告を削除
     await playOpeningAnimation(packCount);
 
     filterPanel.classList.remove("hidden");
@@ -285,47 +285,48 @@ function wait(ms) {
   });
 }
 
-async function showPreOpeningAd() {
-  if (!preOpeningAd || !preOpeningAdContinue) {
-    return;
-  }
+// 自前のパック開封前広告を削除
+// async function showPreOpeningAd() {
+//   if (!preOpeningAd || !preOpeningAdContinue) {
+//     return;
+//   }
 
-  preOpeningAd.classList.remove("hidden");
-  preOpeningAd.setAttribute("aria-hidden", "false");
-  document.body.classList.add("modal-open");
+//   preOpeningAd.classList.remove("hidden");
+//   preOpeningAd.setAttribute("aria-hidden", "false");
+//   document.body.classList.add("modal-open");
 
-  preOpeningAdContinue.disabled = true;
+//   preOpeningAdContinue.disabled = true;
 
-  for (let seconds = PRE_OPENING_AD_SECONDS; seconds > 0; seconds -= 1) {
-    if (preOpeningAdCountdown) {
-      preOpeningAdCountdown.textContent =
-        `ローディング中...${seconds}`;
-    }
+//   for (let seconds = PRE_OPENING_AD_SECONDS; seconds > 0; seconds -= 1) {
+//     if (preOpeningAdCountdown) {
+//       preOpeningAdCountdown.textContent =
+//         `ローディング中...${seconds}`;
+//     }
 
-    await wait(1000);
-  }
+//     await wait(1000);
+//   }
 
-  if (preOpeningAdCountdown) {
-    preOpeningAdCountdown.textContent =
-      "準備完了！";
-  }
+//   if (preOpeningAdCountdown) {
+//     preOpeningAdCountdown.textContent =
+//       "準備完了！";
+//   }
 
-  preOpeningAdContinue.disabled = false;
+//   preOpeningAdContinue.disabled = false;
 
-  await new Promise(resolve => {
-    const handleClick = () => {
-      preOpeningAdContinue.removeEventListener("click", handleClick);
+//   await new Promise(resolve => {
+//     const handleClick = () => {
+//       preOpeningAdContinue.removeEventListener("click", handleClick);
 
-      preOpeningAd.classList.add("hidden");
-      preOpeningAd.setAttribute("aria-hidden", "true");
-      document.body.classList.remove("modal-open");
+//       preOpeningAd.classList.add("hidden");
+//       preOpeningAd.setAttribute("aria-hidden", "true");
+//       document.body.classList.remove("modal-open");
 
-      resolve();
-    };
+//       resolve();
+//     };
 
-    preOpeningAdContinue.addEventListener("click", handleClick);
-  });
-}
+//     preOpeningAdContinue.addEventListener("click", handleClick);
+//   });
+// }
 
 async function playOpeningAnimation(packCount) {
   if (!openingOverlay) {
@@ -570,15 +571,108 @@ function displayBoxSummary(boxSummary) {
 
 function displaySummary(summary) {
   if (summary.length === 0) {
-    summaryDiv.innerHTML = "<p>条件に一致するカードがありません。</p>";
+    summaryDiv.innerHTML =
+      "<p>条件に一致するカードがありません。</p>";
     return;
   }
 
+  // カード番号が分母より大きいカード。
+  // AR、SR、SAR、MURなどのシークレット番号カードが該当する。
+  const secretNumberedCards = summary
+    .filter(item => isSecretNumberedCard(item.card))
+    .sort((a, b) => {
+      const cardNoDiff =
+        getCardNoNumber(b.card) - getCardNoNumber(a.card);
+
+      if (cardNoDiff !== 0) {
+        return cardNoDiff;
+      }
+
+      return String(a.card.name || "")
+        .localeCompare(String(b.card.name || ""), "ja");
+    });
+
+  // 通常のカード番号。
+  // カード番号の小さい順に並べる。
+  const regularNumberedCards = summary
+    .filter(item => !isSecretNumberedCard(item.card))
+    .sort((a, b) => {
+      const cardNoDiff =
+        getCardNoNumber(a.card) - getCardNoNumber(b.card);
+
+      if (cardNoDiff !== 0) {
+        return cardNoDiff;
+      }
+
+      return String(a.card.name || "")
+        .localeCompare(String(b.card.name || ""), "ja");
+    });
+
+  const secretHtml = secretNumberedCards.length > 0
+    ? `
+      <div class="summary-grid summary-grid--secret">
+        ${secretNumberedCards
+          .map(item => renderCardTile(item.card, item.count))
+          .join("")}
+      </div>
+    `
+    : "";
+
+  const regularHtml = regularNumberedCards.length > 0
+    ? `
+      <div class="summary-grid summary-grid--regular">
+        ${regularNumberedCards
+          .map(item => renderCardTile(item.card, item.count))
+          .join("")}
+      </div>
+    `
+    : "";
+
   summaryDiv.innerHTML = `
-    <div class="summary-grid">
-      ${summary.map(item => renderCardTile(item.card, item.count)).join("")}
+    <div class="summary-card-groups">
+      ${secretHtml}
+      ${regularHtml}
     </div>
   `;
+}
+
+function isSecretNumberedCard(card) {
+  const cardNo = getCardNoNumber(card);
+  const cardNoTotal = getCardNoTotalNumber(card);
+
+  if (!Number.isFinite(cardNo)) {
+    return false;
+  }
+
+  if (!Number.isFinite(cardNoTotal)) {
+    return false;
+  }
+
+  return cardNo > cardNoTotal;
+}
+
+function getCardNoNumber(card) {
+  return parseCardNumber(card?.cardNo);
+}
+
+function getCardNoTotalNumber(card) {
+  return parseCardNumber(card?.cardNoTotal);
+}
+
+function parseCardNumber(value) {
+  if (value === null || value === undefined || value === "") {
+    return Number.NaN;
+  }
+
+  // "082" → 82
+  // "082a" のような値が来ても先頭の数値を使用する
+  const match = String(value).match(/\d+/);
+
+  if (!match) {
+    return Number.NaN;
+  }
+
+  return Number(match[0]);
 }
 
 function displayPacks(packs) {
