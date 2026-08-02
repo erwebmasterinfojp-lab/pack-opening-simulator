@@ -31,16 +31,16 @@
       "countDistribution": [
         {
           "count": 1,
-          "weight": 95
+          "weight": 85
         },
         {
           "count": 2,
-          "weight": 5
+          "weight": 15
         }
       ],
       "rarityWeights": {
-        "SR": 94,
-        "SAR": 24,
+        "SR": 92,
+        "SAR": 26,
         "MUR": 2
       },
       "extraHitRCountAdjustment": -1
