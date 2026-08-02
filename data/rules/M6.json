@@ -49,7 +49,7 @@
     "fixedBoxInclusions": [
       {
         "enabled": true,
-        "description": "MEGAシリーズ想定：グッズSRを1BOXに1枚確定。ただし対象カードが存在しない場合はスキップ。",
+        "description": "MEGAシリーズ想定：グッズSR/エネルギーSRを1BOXに1枚確定。ただし対象カードが存在しない場合はスキップ。",
         "rarity": "SR",
         "category": "trainer",
         "trainerType": "グッズ",
@@ -89,6 +89,6 @@
     "封入率は参考情報とユーザー仮説をもとにした推定設定。",
     "SAR、MURなど公式カード検索にないカードは、data/cards/M6.jsonへ手動追加して対応する。",
     "2枚箱の場合、extraHitRCountAdjustment=-1 によりR枠を1枚減らす。",
-    "MEGAシリーズのグッズSR確定枠は fixedBoxInclusions で表現する。"
+    "MEGAシリーズの確定SR枠は、グッズ・どうぐ・エネルギーSRの中から合計1枚とする。"
   ]
 }
