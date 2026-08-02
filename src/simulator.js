@@ -130,16 +130,17 @@ export function openBox(cards, packRule = {}) {
 function createBoxPlan(pools, packRule) {
   const blockedBoxHitIds = new Set();
 
-  // Goods/tool SR: exactly one per box when such cards exist.
-  // Support SR is NOT included here; it stays in the normal box-hit pool.
-  const guaranteedGoodsSrCard = pickUniqueCard(
-    pools.goodsSr,
-    blockedBoxHitIds
-  );
+// Bonus SR slot:
+// Exactly one SR per box from goods, Pokémon tools, or Energy.
+// Support SR and Pokémon SR remain in the normal box-hit pool.
+const guaranteedBonusSrCard = pickUniqueCard(
+  pools.bonusSr,
+  blockedBoxHitIds
+);
 
-  if (guaranteedGoodsSrCard) {
-    blockedBoxHitIds.add(getCardId(guaranteedGoodsSrCard));
-  }
+if (guaranteedBonusSrCard) {
+  blockedBoxHitIds.add(getCardId(guaranteedBonusSrCard));
+}
 
   // Keep compatibility with existing rules, but remove goods/tool SR from
   // fixed inclusions because they are controlled above.
@@ -212,9 +213,10 @@ function createBoxPlan(pools, packRule) {
   // Goods/tool SR is completely excluded here so only one goods/tool SR can
   // appear in a box. Support SR remains available.
   const boxHitPool = pools.boxHit.filter(card => {
-    // グッズ・どうぐSRは別途1BOX1枚で制御済み。
-    // サポートSRは通常高レア抽選に残す。
-    return !isGoodsSr(card);
+    // グッズ・どうぐ・エネルギーSRは、
+    // 共通の確定SR枠で1BOX1枚に制御する。
+    // ポケモンSR・サポートSRは通常高レア抽選に残す。
+    return !isBonusSr(card);
   });
 
   const boxHitCards = pickWeightedBoxHitCards(
@@ -370,7 +372,7 @@ function getBoxHitRarityWeights(packRule) {
 
   return {
     slot4HitCards: [
-      ...(guaranteedGoodsSrCard ? [guaranteedGoodsSrCard] : []),
+      ...(guaranteedBonusSrCard ? [guaranteedBonusSrCard] : []),
       ...fixedCards,
       ...arCards,
       ...boxHitCards,
@@ -549,7 +551,7 @@ function buildCardPools(cards) {
 
     ar: cards.filter(card => card.rarity === "AR"),
 
-    goodsSr: cards.filter(card => isGoodsSr(card)),
+    bonusSr: cards.filter(card => isBonusSr(card)),
 
     boxHit: cards.filter(card => {
       return BOX_HIT_RARITY_VALUES.has(card.rarity);
@@ -619,9 +621,10 @@ function pickBoxRrCards(pools, rrCount, blockedIds = new Set()) {
 }
 
 function pickFixedBoxInclusionCards(pools, packRule, blockedIds) {
-  const inclusions = Array.isArray(packRule.fixedBoxInclusions)
-    ? packRule.fixedBoxInclusions
-    : [];
+  const inclusions = getRuleValue(packRule, [
+    ["boxRules", "fixedBoxInclusions"],
+    ["fixedBoxInclusions"]
+  ]);
 
   const pickedCards = [];
 
@@ -881,22 +884,27 @@ function isBoxHitCard(card) {
   );
 }
 
-function isGoodsSr(card) {
+function isBonusSr(card) {
   if (card.rarity !== "SR") {
     return false;
   }
 
-  if (card.category !== "trainer") {
-    return false;
-  }
-
+  const category = String(card.category || "").toLowerCase();
   const trainerType = String(card.trainerType || "");
 
-  return (
-    trainerType === "グッズ" ||
-    trainerType === "どうぐ" ||
-    trainerType === "ポケモンのどうぐ"
-  );
+  const isGoodsOrToolSr =
+    category === "trainer" &&
+    (
+      trainerType === "グッズ" ||
+      trainerType === "どうぐ" ||
+      trainerType === "ポケモンのどうぐ"
+    );
+
+  const isEnergySr =
+    category === "energy" ||
+    trainerType === "エネルギー";
+
+  return isGoodsOrToolSr || isEnergySr;
 }
 
 function isMegaExRr(card) {
