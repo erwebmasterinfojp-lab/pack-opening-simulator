@@ -414,77 +414,94 @@ function buildPackCards({ pools, packRule, slot4Card }) {
     ]);
   };
 
-  // Slots 1-3: basic non-trainer cards only.
-  for (let i = 0; i < 3; i += 1) {
-    const card = pickUniqueCard(
-      pools.slot123,
+  const getReservedTrainerCount = () => {
+    if (!slot4Card || !isTrainer(slot4Card)) {
+      return 0;
+    }
+
+    return usedCardIds.has(getCardId(slot4Card)) ? 0 : 1;
+  };
+
+  const pickNormalSlotCard = (slotName, nonTrainerPool) => {
+    const trainerRule = getTrainerSlotRule(packRule, slotName);
+    const trainerCount = countTrainerCards(packCards);
+    const maxTrainerCards = getMaxTrainerCardsPerPack(packRule);
+
+    const canPickTrainer =
+      trainerRule.allowTrainer &&
+      trainerCount + getReservedTrainerCount() < maxTrainerCards &&
+      Math.random() < trainerRule.trainerChance;
+
+    if (canPickTrainer) {
+      const trainerCard = pickUniqueCard(
+        pools.lowTrainer,
+        getBlockedIdsForRandomPick()
+      );
+
+      if (trainerCard) {
+        return trainerCard;
+      }
+    }
+
+    return pickUniqueCard(
+      nonTrainerPool,
       getBlockedIdsForRandomPick()
+    );
+  };
+
+  // Slots 1-3:
+  // Whether a trainer can appear is controlled by each set's rule JSON.
+  for (let slotNumber = 1; slotNumber <= 3; slotNumber += 1) {
+    const card = pickNormalSlotCard(
+      `slot${slotNumber}`,
+      pools.slot123
     );
 
     addCard(card);
   }
 
-  // Slot 4: R / RR / AR / SR+ hit card if assigned.
-  // Otherwise, a low-rarity trainer may appear here.
+  // Slot 4:
+  // R / RR / AR / SR+ hit card if assigned.
+  // Otherwise use the set-specific trainer rule for slot 4.
   if (slot4Card) {
     addCard(slot4Card);
   } else {
-    const trainerUsed = packCards.some(card => isTrainer(card));
-    const trainerChance = getSlotTrainerChance(packRule, "slot4", 0.28);
-
-    let slot4NormalCard = null;
-
-    if (!trainerUsed && Math.random() < trainerChance) {
-      slot4NormalCard = pickUniqueCard(
-        pools.lowTrainer,
-        getBlockedIdsForRandomPick()
-      );
-    }
-
-    if (!slot4NormalCard) {
-      slot4NormalCard = pickUniqueCard(
-        pools.slot4NonTrainer,
-        getBlockedIdsForRandomPick()
-      );
-    }
+    const slot4NormalCard = pickNormalSlotCard(
+      "slot4",
+      pools.slot4NonTrainer
+    );
 
     addCard(slot4NormalCard);
   }
 
-  // Slot 5: no R / RR / high rarity.
-  // Trainer appears 0-1 per pack, so no trainer if slot 4 already had one.
-  const trainerUsed = packCards.some(card => isTrainer(card));
-  const trainerChance = getSlotTrainerChance(packRule, "slot5", 0.25);
-
-  let slot5Card = null;
-
-  if (!trainerUsed && Math.random() < trainerChance) {
-    slot5Card = pickUniqueCard(
-      pools.lowTrainer,
-      usedCardIds
-    );
-  }
-
-  if (!slot5Card) {
-    slot5Card = pickUniqueCard(
-      pools.slot5NonTrainer,
-      usedCardIds
-    );
-  }
+  // Slot 5:
+  // No R / RR / high rarity. Trainer appearance is rule-driven.
+  const slot5Card = pickNormalSlotCard(
+    "slot5",
+    pools.slot5NonTrainer
+  );
 
   addCard(slot5Card);
 
-  // Safety fallback: avoid duplicate cards, extra trainer if already used,
-  // and additional R/RR/high-rarity cards.
+  // Safety fallback:
+  // Keep five unique cards and never exceed the set-specific trainer limit.
   while (packCards.length < 5) {
-    const trainerAlreadyUsed = packCards.some(card => isTrainer(card));
-    const fallbackPool = trainerAlreadyUsed
-      ? pools.anyNonTrainerNonHit
-      : pools.anyNonHit;
+    const nextSlotName = `slot${packCards.length + 1}`;
+    const trainerRule = getTrainerSlotRule(packRule, nextSlotName);
+    const trainerCount = countTrainerCards(packCards);
+    const maxTrainerCards = getMaxTrainerCardsPerPack(packRule);
+
+    const trainerAllowedForFallback =
+      trainerRule.allowTrainer &&
+      trainerCount + getReservedTrainerCount() < maxTrainerCards;
+
+    const fallbackPool = trainerAllowedForFallback
+      ? pools.anyNonHit
+      : pools.anyNonTrainerNonHit;
 
     const fallback = pickUniqueCard(
       fallbackPool,
-      usedCardIds
+      getBlockedIdsForRandomPick()
     );
 
     if (!fallback) {
@@ -847,18 +864,102 @@ function getPacksPerBox(packRule) {
   );
 }
 
-function getSlotTrainerChance(packRule, slotName, fallback) {
+function getMaxTrainerCardsPerPack(packRule) {
   const value = getRuleValue(packRule, [
-    ["slotRules", slotName, "trainerChance"],
-    ["packRules", slotName, "trainerChance"],
-    ["trainerChance"]
+    ["packRules", "maxTrainerCardsPerPack"],
+    ["trainerRules", "maxPerPack"],
+    ["maxTrainerCardsPerPack"]
   ]);
 
   if (value === undefined || value === null) {
+    return 1;
+  }
+
+  const normalizedValue = Number(value);
+
+  if (!Number.isFinite(normalizedValue)) {
+    return 1;
+  }
+
+  return Math.max(0, Math.floor(normalizedValue));
+}
+
+function getTrainerSlotRule(packRule, slotName) {
+  const defaultTrainerChances = {
+    slot1: 0,
+    slot2: 0,
+    slot3: 0,
+    slot4: 0.28,
+    slot5: 0.25
+  };
+
+  const defaultChance = defaultTrainerChances[slotName] ?? 0;
+
+  const rule = getRuleValue(packRule, [
+    ["packRules", "slotRules", slotName],
+    ["trainerRules", "slots", slotName],
+    ["slotRules", slotName],
+    ["packRules", slotName]
+  ]);
+
+  if (typeof rule === "number") {
+    const trainerChance = normalizeProbability(rule, defaultChance);
+
+    return {
+      allowTrainer: trainerChance > 0,
+      trainerChance
+    };
+  }
+
+  if (!rule || typeof rule !== "object") {
+    return {
+      allowTrainer: defaultChance > 0,
+      trainerChance: defaultChance
+    };
+  }
+
+  const allowTrainerValue =
+    rule.allowTrainer ??
+    rule.trainerEnabled ??
+    rule.enabled;
+
+  const trainerChance = normalizeProbability(
+    rule.trainerChance ?? rule.chance,
+    defaultChance
+  );
+
+  return {
+    allowTrainer:
+      allowTrainerValue === undefined
+        ? trainerChance > 0
+        : Boolean(allowTrainerValue),
+    trainerChance
+  };
+}
+
+function normalizeProbability(value, fallback) {
+  if (value === undefined || value === null || value === "") {
     return fallback;
   }
 
-  return Number(value);
+  const numberValue = Number(value);
+
+  if (!Number.isFinite(numberValue)) {
+    return fallback;
+  }
+
+  // Both 0.15 and 15 are accepted as 15%.
+  const normalizedValue = numberValue > 1
+    ? numberValue / 100
+    : numberValue;
+
+  return Math.min(1, Math.max(0, normalizedValue));
+}
+
+function countTrainerCards(cards) {
+  return cards.reduce((count, card) => {
+    return count + (isTrainer(card) ? 1 : 0);
+  }, 0);
 }
 
 function getCardId(card) {
@@ -869,7 +970,7 @@ function getCardId(card) {
 }
 
 function isTrainer(card) {
-  return card.category === "trainer";
+  return String(card.category || "").toLowerCase() === "trainer";
 }
 
 function isHighRarity(card) {

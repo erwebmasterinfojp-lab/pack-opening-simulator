@@ -3,7 +3,6 @@
   "displayName": "M5 アビスアイ",
   "cardsPerPack": 5,
   "packsPerBox": 30,
-
   "baseSlots": [
     {
       "name": "commonSlot",
@@ -18,14 +17,11 @@
       "count": 1
     }
   ],
-
   "boxRules": {
     "enabled": true,
-
     "variableSlot": {
       "description": "各パック5枚目の枠。BOX全体の封入枚数を先に決めてから30パックへ分配する。"
     },
-
     "boxHit": {
       "description": "1BOXに1枚程度の当たり枠。2枚箱の場合は2枚。",
       "countDistribution": [
@@ -45,7 +41,6 @@
       },
       "extraHitRCountAdjustment": -1
     },
-
     "fixedBoxInclusions": [
       {
         "enabled": true,
@@ -57,7 +52,6 @@
         "countsAsBoxHit": true
       }
     ],
-
     "boxRarityCounts": [
       {
         "rarity": "AR",
@@ -81,14 +75,38 @@
         "count": 8
       }
     ],
-
     "fillRarityGroup": "U"
   },
-
   "notes": [
     "封入率は参考情報とユーザー仮説をもとにした推定設定。",
     "SAR、MURなど公式カード検索にないカードは、data/cards/M5.jsonへ手動追加して対応する。",
     "2枚箱の場合、extraHitRCountAdjustment=-1 によりR枠を1枚減らす。",
-    "MEGAシリーズのグッズSR確定枠は fixedBoxInclusions で表現する。"
-  ]
+    "MEGAシリーズのグッズSR確定枠は fixedBoxInclusions で表現する。",
+    "通常トレーナーズは4・5枠目のみ候補とし、1パック最大1枚とする。"
+  ],
+  "packRules": {
+    "maxTrainerCardsPerPack": 1,
+    "slotRules": {
+      "slot1": {
+        "allowTrainer": false,
+        "trainerChance": 0
+      },
+      "slot2": {
+        "allowTrainer": false,
+        "trainerChance": 0
+      },
+      "slot3": {
+        "allowTrainer": false,
+        "trainerChance": 0
+      },
+      "slot4": {
+        "allowTrainer": true,
+        "trainerChance": 0.28
+      },
+      "slot5": {
+        "allowTrainer": true,
+        "trainerChance": 0.25
+      }
+    }
+  }
 }
