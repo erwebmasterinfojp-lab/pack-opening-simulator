@@ -118,15 +118,20 @@ async function init() {
       throw new Error(`パックシリーズ一覧を読み込めませんでした: ${response.status}`);
     }
 
-    sets = await response.json();
+    const loadedSets = await response.json();
 
-    if (!Array.isArray(sets) || sets.length === 0) {
+    if (!Array.isArray(loadedSets) || loadedSets.length === 0) {
       throw new Error("パックシリーズが登録されていません。");
     }
-
+    
+    // M6 → M5 → M4 のように、新しいパックから降順で並べる
+    sets = [...loadedSets].sort(compareSetsNewestFirst);
+    
     renderSetList();
-
+    
+    // 降順ソート後の先頭、つまり最新パックをデフォルト選択
     await selectSet(sets[0].setCode);
+
   } catch (error) {
     console.error(error);
     setStatus(`読み込みに失敗しました：${error.message}`, "error");
@@ -168,6 +173,36 @@ function renderSetList() {
       selectSet(button.dataset.setCode);
     });
   });
+}
+
+function compareSetsNewestFirst(a, b) {
+  const aNumber = getSetCodeNumber(a.setCode);
+  const bNumber = getSetCodeNumber(b.setCode);
+
+  // 数字部分を降順にする
+  if (aNumber !== bNumber) {
+    return bNumber - aNumber;
+  }
+
+  // 数字が同じ、または数字を取得できない場合の予備比較
+  return String(b.setCode || "").localeCompare(
+    String(a.setCode || ""),
+    "ja",
+    {
+      numeric: true,
+      sensitivity: "base"
+    }
+  );
+}
+
+function getSetCodeNumber(setCode) {
+  const match = String(setCode || "").match(/\d+/);
+
+  if (!match) {
+    return -1;
+  }
+
+  return Number(match[0]);
 }
 
 async function selectSet(setCode) {
