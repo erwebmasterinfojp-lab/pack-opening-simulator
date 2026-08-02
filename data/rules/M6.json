@@ -75,29 +75,41 @@
         "count": 8
       }
     ],
-    "fillRarityGroup": "U"
+    "fillRarityGroup": "U",
+    "boxCardCopyLimits": {
+      "C": {
+        "minPerCard": 1,
+        "maxPerCard": 4
+      },
+      "U": {
+        "minPerCard": 1,
+        "maxPerCard": 3
+      }
+    },
+    "boxGenerationMaxAttempts": 40
   },
   "notes": [
     "封入率は参考情報とユーザー仮説をもとにした推定設定。",
     "SAR、MURなど公式カード検索にないカードは、data/cards/M6.jsonへ手動追加して対応する。",
     "2枚箱の場合、extraHitRCountAdjustment=-1 によりR枠を1枚減らす。",
     "MEGAシリーズの確定SR枠は、グッズ・どうぐ・エネルギーSRの中から合計1枚とする。",
-    "シールド戦向け設定として、通常トレーナーズは1〜5枠目で候補とし、1パック最大2枚とする。"
+    "シールド戦向け設定として、通常トレーナーズは1〜5枠目で候補とし、1パック最大2枚とする。",
+    "1BOX内で同一Cは1～4枚、同一Uは1～3枚になるよう補正する。"
   ],
   "packRules": {
-    "maxTrainerCardsPerPack": 3,
+    "maxTrainerCardsPerPack": 2,
     "slotRules": {
       "slot1": {
         "allowTrainer": true,
-        "trainerChance": 0.15
+        "trainerChance": 0.10
       },
       "slot2": {
         "allowTrainer": true,
-        "trainerChance": 0.10
+        "trainerChance": 0.15
       },
       "slot3": {
         "allowTrainer": true,
-        "trainerChance": 0.10
+        "trainerChance": 0.15
       },
       "slot4": {
         "allowTrainer": true,

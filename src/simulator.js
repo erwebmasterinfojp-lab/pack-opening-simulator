@@ -97,6 +97,38 @@ export function openPacks(cards, packCount, packRule = {}) {
 }
 
 export function openBox(cards, packRule = {}) {
+  const maxAttempts = getBoxGenerationMaxAttempts(packRule);
+  let lastGeneratedPacks = [];
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    const packs = generateSingleBox(cards, packRule);
+    lastGeneratedPacks = packs;
+
+    const result = applyBoxCardCopyLimits(
+      packs,
+      cards,
+      packRule
+    );
+
+    if (result.success) {
+      return packs;
+    }
+
+    if (attempt === maxAttempts) {
+      console.warn(
+        "BOX内カード枚数制約を完全には満たせませんでした。",
+        {
+          attempts: maxAttempts,
+          violations: result.violations
+        }
+      );
+    }
+  }
+
+  return lastGeneratedPacks;
+}
+
+function generateSingleBox(cards, packRule) {
   const pools = buildCardPools(cards);
   const packsPerBox = getPacksPerBox(packRule);
   const boxPlan = createBoxPlan(pools, packRule);
@@ -124,117 +156,349 @@ export function openBox(cards, packRule = {}) {
     });
   }
 
-  ensureCommonUncommonCoverage(
-    packs,
-    cards,
-    packRule
-  );
-
   return packs;
 }
 
 /**
- * 1BOX内で、カードマスターに登録されているC・Uを
- * それぞれ最低1枚ずつ出現させる。
+ * ルールJSONの boxRules.boxCardCopyLimits を参照し、
+ * 1BOX内におけるカード単位の最低枚数・最大枚数を調整する。
  *
- * 通常の開封結果を生成した後、BOX内で2枚以上出ているC/Uを、
- * まだ出ていないC/Uへ差し替える。
+ * 例:
+ * "boxCardCopyLimits": {
+ *   "C": { "minPerCard": 1, "maxPerCard": 4 },
+ *   "U": { "minPerCard": 1, "maxPerCard": 3 }
+ * }
  *
- * トレーナーズは各パックのslotRulesと
- * maxTrainerCardsPerPackを守った枠にのみ配置する。
+ * 同じレアリティ同士で差し替えるため、
+ * BOX全体のC/U枚数やR以上の封入枚数は変わらない。
  */
-function ensureCommonUncommonCoverage(packs, cards, packRule) {
-  const enabled = getRuleValue(packRule, [
-    ["boxRules", "guaranteeCommonUncommonCoverage"],
-    ["guaranteeCommonUncommonCoverage"]
-  ]);
+function applyBoxCardCopyLimits(packs, cards, packRule) {
+  const limitsByRarity = getBoxCardCopyLimits(packRule);
+  const violations = [];
 
-  // 明示的にfalseの場合だけ無効化。未設定時は有効。
-  if (enabled === false) {
-    return;
+  for (const [rarity, limit] of Object.entries(limitsByRarity)) {
+    const result = applyRarityCardCopyLimit(
+      packs,
+      cards,
+      packRule,
+      rarity,
+      limit
+    );
+
+    if (!result.success) {
+      violations.push(...result.violations);
+    }
   }
 
-  const requiredCardMap = new Map();
+  return {
+    success: violations.length === 0,
+    violations
+  };
+}
 
-  for (const card of cards) {
-    if (!["C", "U"].includes(card.rarity)) {
-      continue;
+function applyRarityCardCopyLimit(
+  packs,
+  cards,
+  packRule,
+  rarity,
+  limit
+) {
+  const masterCards = cards.filter(card => {
+    return card.rarity === rarity;
+  });
+
+  if (masterCards.length === 0) {
+    return {
+      success: true,
+      violations: []
+    };
+  }
+
+  const minPerCard = limit.minPerCard;
+  const maxPerCard = limit.maxPerCard;
+  const counts = countCardsInPacks(packs);
+
+  const totalRarityCards = masterCards.reduce((sum, card) => {
+    return sum + (counts.get(getCardId(card)) || 0);
+  }, 0);
+
+  const minimumRequired = masterCards.length * minPerCard;
+  const maximumCapacity = Number.isFinite(maxPerCard)
+    ? masterCards.length * maxPerCard
+    : Number.POSITIVE_INFINITY;
+
+  if (
+    totalRarityCards < minimumRequired ||
+    totalRarityCards > maximumCapacity
+  ) {
+    return {
+      success: false,
+      violations: [{
+        rarity,
+        reason: "capacity",
+        totalRarityCards,
+        cardTypeCount: masterCards.length,
+        minPerCard,
+        maxPerCard
+      }]
+    };
+  }
+
+  const maxOperations = Math.max(
+    200,
+    totalRarityCards * masterCards.length * 2
+  );
+
+  for (let operation = 0; operation < maxOperations; operation += 1) {
+    const underMinimumCards = masterCards
+      .filter(card => {
+        return (counts.get(getCardId(card)) || 0) < minPerCard;
+      })
+      .sort((a, b) => {
+        const trainerDiff =
+          Number(isTrainer(b)) - Number(isTrainer(a));
+
+        if (trainerDiff !== 0) {
+          return trainerDiff;
+        }
+
+        return (
+          (counts.get(getCardId(a)) || 0) -
+          (counts.get(getCardId(b)) || 0)
+        );
+      });
+
+    const overMaximumCards = masterCards
+      .filter(card => {
+        return (
+          Number.isFinite(maxPerCard) &&
+          (counts.get(getCardId(card)) || 0) > maxPerCard
+        );
+      })
+      .sort((a, b) => {
+        return (
+          (counts.get(getCardId(b)) || 0) -
+          (counts.get(getCardId(a)) || 0)
+        );
+      });
+
+    if (
+      underMinimumCards.length === 0 &&
+      overMaximumCards.length === 0
+    ) {
+      return {
+        success: true,
+        violations: []
+      };
     }
 
-    requiredCardMap.set(getCardId(card), card);
-  }
+    let sourceCards = [];
+    let targetCards = [];
 
-  const boxCardCounts = countCardsInPacks(packs);
+    if (underMinimumCards.length > 0) {
+      targetCards = underMinimumCards;
 
-  // トレーナーズは置ける枠が限定されるため、先に補完する。
-  const missingCards = [...requiredCardMap.values()]
-    .filter(card => {
-      return (boxCardCounts.get(getCardId(card)) || 0) === 0;
-    })
-    .sort((a, b) => {
-      const trainerDiff = Number(isTrainer(b)) - Number(isTrainer(a));
+      // 最低枚数を割らずに差し替えられるカードを使用する。
+      // 最大超過しているカードを最優先にする。
+      sourceCards = masterCards
+        .filter(card => {
+          return (counts.get(getCardId(card)) || 0) > minPerCard;
+        })
+        .sort((a, b) => {
+          const aCount = counts.get(getCardId(a)) || 0;
+          const bCount = counts.get(getCardId(b)) || 0;
+          const aOver = Number.isFinite(maxPerCard)
+            ? Math.max(0, aCount - maxPerCard)
+            : 0;
+          const bOver = Number.isFinite(maxPerCard)
+            ? Math.max(0, bCount - maxPerCard)
+            : 0;
 
-      if (trainerDiff !== 0) {
-        return trainerDiff;
-      }
+          if (aOver !== bOver) {
+            return bOver - aOver;
+          }
 
-      return String(a.cardNo || "").localeCompare(
-        String(b.cardNo || ""),
-        "ja",
-        { numeric: true }
-      );
-    });
+          return bCount - aCount;
+        });
+    } else {
+      sourceCards = overMaximumCards;
 
-  for (const missingCard of missingCards) {
-    const replacement =
-      findCoverageReplacement(
-        packs,
-        missingCard,
-        boxCardCounts,
-        packRule,
-        true
-      ) ||
-      findCoverageReplacement(
-        packs,
-        missingCard,
-        boxCardCounts,
-        packRule,
-        false
-      );
+      targetCards = masterCards
+        .filter(card => {
+          return (
+            !Number.isFinite(maxPerCard) ||
+            (counts.get(getCardId(card)) || 0) < maxPerCard
+          );
+        })
+        .sort((a, b) => {
+          const trainerDiff =
+            Number(isTrainer(b)) - Number(isTrainer(a));
+
+          if (trainerDiff !== 0) {
+            return trainerDiff;
+          }
+
+          return (
+            (counts.get(getCardId(a)) || 0) -
+            (counts.get(getCardId(b)) || 0)
+          );
+        });
+    }
+
+    const replacement = findCardCountLimitReplacement(
+      packs,
+      sourceCards,
+      targetCards,
+      counts,
+      packRule,
+      minPerCard
+    );
 
     if (!replacement) {
-      console.warn(
-        "C/U最低1枚保証の差し替え先を確保できませんでした。",
-        {
-          cardNo: missingCard.cardNo,
-          name: missingCard.name,
-          rarity: missingCard.rarity
-        }
-      );
-      continue;
+      break;
     }
 
     const {
       packIndex,
       slotIndex,
-      replacedCard
+      sourceCard,
+      targetCard
     } = replacement;
 
-    packs[packIndex].cards[slotIndex] = missingCard;
+    packs[packIndex].cards[slotIndex] = targetCard;
 
-    const replacedCardId = getCardId(replacedCard);
-    const missingCardId = getCardId(missingCard);
+    const sourceCardId = getCardId(sourceCard);
+    const targetCardId = getCardId(targetCard);
 
-    boxCardCounts.set(
-      replacedCardId,
-      (boxCardCounts.get(replacedCardId) || 0) - 1
+    counts.set(
+      sourceCardId,
+      (counts.get(sourceCardId) || 0) - 1
     );
 
-    boxCardCounts.set(
-      missingCardId,
-      (boxCardCounts.get(missingCardId) || 0) + 1
+    counts.set(
+      targetCardId,
+      (counts.get(targetCardId) || 0) + 1
     );
   }
+
+  const violations = masterCards
+    .map(card => {
+      const count = counts.get(getCardId(card)) || 0;
+
+      if (
+        count < minPerCard ||
+        (
+          Number.isFinite(maxPerCard) &&
+          count > maxPerCard
+        )
+      ) {
+        return {
+          rarity,
+          cardNo: card.cardNo,
+          name: card.name,
+          count,
+          minPerCard,
+          maxPerCard
+        };
+      }
+
+      return null;
+    })
+    .filter(Boolean);
+
+  return {
+    success: violations.length === 0,
+    violations
+  };
+}
+
+function findCardCountLimitReplacement(
+  packs,
+  sourceCards,
+  targetCards,
+  counts,
+  packRule,
+  sourceMinimum
+) {
+  const candidates = [];
+
+  for (const targetCard of targetCards) {
+    const targetCardId = getCardId(targetCard);
+
+    for (const sourceCard of sourceCards) {
+      const sourceCardId = getCardId(sourceCard);
+      const sourceCount = counts.get(sourceCardId) || 0;
+
+      if (sourceCount <= sourceMinimum) {
+        continue;
+      }
+
+      for (
+        let packIndex = 0;
+        packIndex < packs.length;
+        packIndex += 1
+      ) {
+        const pack = packs[packIndex];
+
+        // 1パック内に同一カードを2枚入れない。
+        if (
+          pack.cards.some(card => {
+            return getCardId(card) === targetCardId;
+          })
+        ) {
+          continue;
+        }
+
+        for (
+          let slotIndex = 0;
+          slotIndex < pack.cards.length;
+          slotIndex += 1
+        ) {
+          const currentCard = pack.cards[slotIndex];
+
+          if (getCardId(currentCard) !== sourceCardId) {
+            continue;
+          }
+
+          if (
+            !canPlaceCoverageCardInSlot(
+              targetCard,
+              currentCard,
+              pack,
+              slotIndex,
+              packRule
+            )
+          ) {
+            continue;
+          }
+
+          candidates.push({
+            packIndex,
+            slotIndex,
+            sourceCard,
+            targetCard,
+            sourceCount
+          });
+        }
+      }
+    }
+  }
+
+  if (candidates.length === 0) {
+    return null;
+  }
+
+  // 最も多く出ている差し替え元を優先する。
+  candidates.sort((a, b) => {
+    return b.sourceCount - a.sourceCount;
+  });
+
+  const highestSourceCount = candidates[0].sourceCount;
+  const bestCandidates = candidates.filter(candidate => {
+    return candidate.sourceCount === highestSourceCount;
+  });
+
+  return pickRandom(bestCandidates);
 }
 
 function countCardsInPacks(packs) {
@@ -252,86 +516,6 @@ function countCardsInPacks(packs) {
   }
 
   return counts;
-}
-
-function findCoverageReplacement(
-  packs,
-  missingCard,
-  boxCardCounts,
-  packRule,
-  requireSameRarity
-) {
-  const candidates = [];
-
-  for (let packIndex = 0; packIndex < packs.length; packIndex += 1) {
-    const pack = packs[packIndex];
-
-    const alreadyExistsInPack = pack.cards.some(card => {
-      return getCardId(card) === getCardId(missingCard);
-    });
-
-    if (alreadyExistsInPack) {
-      continue;
-    }
-
-    for (let slotIndex = 0; slotIndex < pack.cards.length; slotIndex += 1) {
-      const replacedCard = pack.cards[slotIndex];
-
-      if (!["C", "U"].includes(replacedCard.rarity)) {
-        continue;
-      }
-
-      const replacedCardId = getCardId(replacedCard);
-      const replacedCardCount = boxCardCounts.get(replacedCardId) || 0;
-
-      // 差し替え元もBOX内に最低1枚残す。
-      if (replacedCardCount <= 1) {
-        continue;
-      }
-
-      if (
-        requireSameRarity &&
-        replacedCard.rarity !== missingCard.rarity
-      ) {
-        continue;
-      }
-
-      if (
-        !canPlaceCoverageCardInSlot(
-          missingCard,
-          replacedCard,
-          pack,
-          slotIndex,
-          packRule
-        )
-      ) {
-        continue;
-      }
-
-      candidates.push({
-        packIndex,
-        slotIndex,
-        replacedCard,
-        replacedCardCount
-      });
-    }
-  }
-
-  if (candidates.length === 0) {
-    return null;
-  }
-
-  // 多く重複しているカードを優先的に差し替える。
-  candidates.sort((a, b) => {
-    return b.replacedCardCount - a.replacedCardCount;
-  });
-
-  const highestCount = candidates[0].replacedCardCount;
-  const bestCandidates = candidates.filter(candidate => {
-    return candidate.replacedCardCount === highestCount;
-  });
-
-  return pickRandom(bestCandidates);
 }
 
 function canPlaceCoverageCardInSlot(
@@ -362,6 +546,114 @@ function canPlaceCoverageCardInSlot(
     trainerCountAfterReplacement <=
     getMaxTrainerCardsPerPack(packRule)
   );
+}
+
+function getBoxCardCopyLimits(packRule) {
+  const configuredLimits = getRuleValue(packRule, [
+    ["boxRules", "boxCardCopyLimits"],
+    ["boxCardCopyLimits"]
+  ]);
+
+  if (
+    configuredLimits &&
+    typeof configuredLimits === "object" &&
+    !Array.isArray(configuredLimits)
+  ) {
+    const normalizedLimits = {};
+
+    for (
+      const [rarity, rawLimit] of
+      Object.entries(configuredLimits)
+    ) {
+      if (
+        !rawLimit ||
+        typeof rawLimit !== "object" ||
+        Array.isArray(rawLimit)
+      ) {
+        continue;
+      }
+
+      const minPerCard = normalizeNonNegativeInteger(
+        rawLimit.minPerCard ?? rawLimit.min,
+        0
+      );
+
+      const maxValue =
+        rawLimit.maxPerCard ??
+        rawLimit.max;
+
+      const maxPerCard =
+        maxValue === undefined ||
+        maxValue === null ||
+        maxValue === ""
+          ? Number.POSITIVE_INFINITY
+          : normalizeNonNegativeInteger(
+              maxValue,
+              Number.POSITIVE_INFINITY
+            );
+
+      normalizedLimits[rarity] = {
+        minPerCard,
+        maxPerCard: Math.max(minPerCard, maxPerCard)
+      };
+    }
+
+    return normalizedLimits;
+  }
+
+  /*
+   * 従来互換:
+   * guaranteeCommonUncommonCoverage がfalseでなければ、
+   * C/Uを最低1枚ずつ保証する。最大枚数は制限しない。
+   */
+  const coverageEnabled = getRuleValue(packRule, [
+    ["boxRules", "guaranteeCommonUncommonCoverage"],
+    ["guaranteeCommonUncommonCoverage"]
+  ]);
+
+  if (coverageEnabled === false) {
+    return {};
+  }
+
+  return {
+    C: {
+      minPerCard: 1,
+      maxPerCard: Number.POSITIVE_INFINITY
+    },
+    U: {
+      minPerCard: 1,
+      maxPerCard: Number.POSITIVE_INFINITY
+    }
+  };
+}
+
+function normalizeNonNegativeInteger(value, fallback) {
+  const numberValue = Number(value);
+
+  if (!Number.isFinite(numberValue)) {
+    return fallback;
+  }
+
+  return Math.max(0, Math.floor(numberValue));
+}
+
+function getBoxGenerationMaxAttempts(packRule) {
+  const value = getRuleValue(packRule, [
+    ["boxRules", "boxGenerationMaxAttempts"],
+    ["boxGenerationMaxAttempts"]
+  ]);
+
+  return normalizePositiveInteger(value, 40);
+}
+
+function normalizePositiveInteger(value, fallback) {
+  const numberValue = Number(value);
+
+  if (!Number.isFinite(numberValue) || numberValue <= 0) {
+    return fallback;
+  }
+
+  return Math.max(1, Math.floor(numberValue));
 }
 
 function createBoxPlan(pools, packRule) {
