@@ -124,7 +124,244 @@ export function openBox(cards, packRule = {}) {
     });
   }
 
+  ensureCommonUncommonCoverage(
+    packs,
+    cards,
+    packRule
+  );
+
   return packs;
+}
+
+/**
+ * 1BOX内で、カードマスターに登録されているC・Uを
+ * それぞれ最低1枚ずつ出現させる。
+ *
+ * 通常の開封結果を生成した後、BOX内で2枚以上出ているC/Uを、
+ * まだ出ていないC/Uへ差し替える。
+ *
+ * トレーナーズは各パックのslotRulesと
+ * maxTrainerCardsPerPackを守った枠にのみ配置する。
+ */
+function ensureCommonUncommonCoverage(packs, cards, packRule) {
+  const enabled = getRuleValue(packRule, [
+    ["boxRules", "guaranteeCommonUncommonCoverage"],
+    ["guaranteeCommonUncommonCoverage"]
+  ]);
+
+  // 明示的にfalseの場合だけ無効化。未設定時は有効。
+  if (enabled === false) {
+    return;
+  }
+
+  const requiredCardMap = new Map();
+
+  for (const card of cards) {
+    if (!["C", "U"].includes(card.rarity)) {
+      continue;
+    }
+
+    requiredCardMap.set(getCardId(card), card);
+  }
+
+  const boxCardCounts = countCardsInPacks(packs);
+
+  // トレーナーズは置ける枠が限定されるため、先に補完する。
+  const missingCards = [...requiredCardMap.values()]
+    .filter(card => {
+      return (boxCardCounts.get(getCardId(card)) || 0) === 0;
+    })
+    .sort((a, b) => {
+      const trainerDiff = Number(isTrainer(b)) - Number(isTrainer(a));
+
+      if (trainerDiff !== 0) {
+        return trainerDiff;
+      }
+
+      return String(a.cardNo || "").localeCompare(
+        String(b.cardNo || ""),
+        "ja",
+        { numeric: true }
+      );
+    });
+
+  for (const missingCard of missingCards) {
+    const replacement =
+      findCoverageReplacement(
+        packs,
+        missingCard,
+        boxCardCounts,
+        packRule,
+        true
+      ) ||
+      findCoverageReplacement(
+        packs,
+        missingCard,
+        boxCardCounts,
+        packRule,
+        false
+      );
+
+    if (!replacement) {
+      console.warn(
+        "C/U最低1枚保証の差し替え先を確保できませんでした。",
+        {
+          cardNo: missingCard.cardNo,
+          name: missingCard.name,
+          rarity: missingCard.rarity
+        }
+      );
+      continue;
+    }
+
+    const {
+      packIndex,
+      slotIndex,
+      replacedCard
+    } = replacement;
+
+    packs[packIndex].cards[slotIndex] = missingCard;
+
+    const replacedCardId = getCardId(replacedCard);
+    const missingCardId = getCardId(missingCard);
+
+    boxCardCounts.set(
+      replacedCardId,
+      (boxCardCounts.get(replacedCardId) || 0) - 1
+    );
+
+    boxCardCounts.set(
+      missingCardId,
+      (boxCardCounts.get(missingCardId) || 0) + 1
+    );
+  }
+}
+
+function countCardsInPacks(packs) {
+  const counts = new Map();
+
+  for (const pack of packs) {
+    for (const card of pack.cards) {
+      const cardId = getCardId(card);
+
+      counts.set(
+        cardId,
+        (counts.get(cardId) || 0) + 1
+      );
+    }
+  }
+
+  return counts;
+}
+
+function findCoverageReplacement(
+  packs,
+  missingCard,
+  boxCardCounts,
+  packRule,
+  requireSameRarity
+) {
+  const candidates = [];
+
+  for (let packIndex = 0; packIndex < packs.length; packIndex += 1) {
+    const pack = packs[packIndex];
+
+    const alreadyExistsInPack = pack.cards.some(card => {
+      return getCardId(card) === getCardId(missingCard);
+    });
+
+    if (alreadyExistsInPack) {
+      continue;
+    }
+
+    for (let slotIndex = 0; slotIndex < pack.cards.length; slotIndex += 1) {
+      const replacedCard = pack.cards[slotIndex];
+
+      if (!["C", "U"].includes(replacedCard.rarity)) {
+        continue;
+      }
+
+      const replacedCardId = getCardId(replacedCard);
+      const replacedCardCount = boxCardCounts.get(replacedCardId) || 0;
+
+      // 差し替え元もBOX内に最低1枚残す。
+      if (replacedCardCount <= 1) {
+        continue;
+      }
+
+      if (
+        requireSameRarity &&
+        replacedCard.rarity !== missingCard.rarity
+      ) {
+        continue;
+      }
+
+      if (
+        !canPlaceCoverageCardInSlot(
+          missingCard,
+          replacedCard,
+          pack,
+          slotIndex,
+          packRule
+        )
+      ) {
+        continue;
+      }
+
+      candidates.push({
+        packIndex,
+        slotIndex,
+        replacedCard,
+        replacedCardCount
+      });
+    }
+  }
+
+  if (candidates.length === 0) {
+    return null;
+  }
+
+  // 多く重複しているカードを優先的に差し替える。
+  candidates.sort((a, b) => {
+    return b.replacedCardCount - a.replacedCardCount;
+  });
+
+  const highestCount = candidates[0].replacedCardCount;
+  const bestCandidates = candidates.filter(candidate => {
+    return candidate.replacedCardCount === highestCount;
+  });
+
+  return pickRandom(bestCandidates);
+}
+
+function canPlaceCoverageCardInSlot(
+  cardToPlace,
+  replacedCard,
+  pack,
+  slotIndex,
+  packRule
+) {
+  if (!isTrainer(cardToPlace)) {
+    return true;
+  }
+
+  const slotName = `slot${slotIndex + 1}`;
+  const trainerRule = getTrainerSlotRule(packRule, slotName);
+
+  if (!trainerRule.allowTrainer) {
+    return false;
+  }
+
+  const currentTrainerCount = countTrainerCards(pack.cards);
+  const trainerCountAfterReplacement =
+    currentTrainerCount -
+    (isTrainer(replacedCard) ? 1 : 0) +
+    1;
+
+  return (
+    trainerCountAfterReplacement <=
+    getMaxTrainerCardsPerPack(packRule)
+  );
 }
 
 function createBoxPlan(pools, packRule) {
