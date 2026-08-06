@@ -58,11 +58,27 @@ const TRAINER_TYPE_ORDER = [
   "スタジアム"
 ];
 
+const EXPORT_HIGH_RARITIES = new Set([
+  "AR",
+  "SR",
+  "SAR",
+  "UR",
+  "MUR",
+  "BWR",
+  "MA",
+  "SSR",
+  "MM",
+  "ACE",
+  "HR"
+]);
+
 let sets = [];
 let selectedSet = null;
 let cards = [];
 let packRule = null;
 let currentPacks = [];
+let latestSummaryItems = [];
+let latestSelectedSetName = "";
 
 const activeRarityFilters = new Set();
 const activeKindFilters = new Set();
@@ -105,6 +121,12 @@ const cardModal = document.getElementById("card-modal");
 const cardModalImage = document.getElementById("card-modal-image");
 const cardModalCaption = document.getElementById("card-modal-caption");
 const cardModalClose = document.getElementById("card-modal-close");
+
+const exportHighRareImageButton =
+  document.getElementById("export-high-rare-image");
+
+const exportAllCardsImageButton =
+  document.getElementById("export-all-cards-image");
 
 init();
 
@@ -270,6 +292,8 @@ function resetOpeningState() {
   boxSummaryDiv.innerHTML = "";
   summaryDiv.innerHTML = "";
   resultDiv.innerHTML = "";
+
+  updateSummaryExportButtons();
 }
 
 function disableOpenButtons() {
@@ -410,6 +434,7 @@ function updateDisplayedResults() {
   displayBoxSummary(boxSummary);
   displaySummary(summary);
   displayPacks(currentPacks);
+  updateSummaryExportButtons();
 }
 
 function renderFilterButtons() {
@@ -870,6 +895,618 @@ function escapeHtml(value) {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 }
+
+
+function updateSummaryExportButtons() {
+  const hasResults = currentPacks.length > 0;
+
+  if (exportHighRareImageButton) {
+    exportHighRareImageButton.disabled = !hasResults;
+  }
+
+  if (exportAllCardsImageButton) {
+    exportAllCardsImageButton.disabled = !hasResults;
+  }
+}
+
+async function exportOpenedCardsImage({
+  onlyHighRare,
+  button
+}) {
+  if (!button || currentPacks.length === 0) {
+    return;
+  }
+
+  const originalText = button.textContent;
+
+  try {
+    button.disabled = true;
+    button.textContent = "生成中...";
+
+    const allSummaryItems = createCardSummary(currentPacks);
+    const targetItems = sortSummaryItemsForExport(
+      onlyHighRare
+        ? allSummaryItems.filter(item => {
+            return isExportHighRareCard(item.card);
+          })
+        : allSummaryItems
+    );
+
+    if (targetItems.length === 0) {
+      alert("画像へ出力できるカードがありません。");
+      return;
+    }
+
+    const imageBlob = await createSummaryImageBlob(
+      targetItems,
+      onlyHighRare
+    );
+
+    if (!imageBlob) {
+      throw new Error("画像データを生成できませんでした。");
+    }
+
+    const objectUrl = URL.createObjectURL(imageBlob);
+    const link = document.createElement("a");
+    const modeName = onlyHighRare
+      ? "ハイレア一覧"
+      : "全カード一覧";
+
+    link.href = objectUrl;
+    link.download = [
+      sanitizeExportFileName(
+        selectedSet?.displayName || "開封結果"
+      ),
+      currentPacks.length + "パック",
+      modeName
+    ].join("_") + ".png";
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    window.setTimeout(() => {
+      URL.revokeObjectURL(objectUrl);
+    }, 1000);
+  } catch (error) {
+    console.error(error);
+    alert(
+      `一覧画像の生成に失敗しました：${error.message}`
+    );
+  } finally {
+    button.textContent = originalText;
+    updateSummaryExportButtons();
+  }
+}
+
+function sortSummaryItemsForExport(summaryItems) {
+  const secretItems = summaryItems
+    .filter(item => isSecretNumberedCard(item.card))
+    .sort((a, b) => {
+      const numberDiff =
+        getCardNoNumber(b.card) -
+        getCardNoNumber(a.card);
+
+      if (numberDiff !== 0) {
+        return numberDiff;
+      }
+
+      return String(a.card.name || "")
+        .localeCompare(String(b.card.name || ""), "ja");
+    });
+
+  const regularItems = summaryItems
+    .filter(item => !isSecretNumberedCard(item.card))
+    .sort((a, b) => {
+      const numberDiff =
+        getCardNoNumber(a.card) -
+        getCardNoNumber(b.card);
+
+      if (numberDiff !== 0) {
+        return numberDiff;
+      }
+
+      return String(a.card.name || "")
+        .localeCompare(String(b.card.name || ""), "ja");
+    });
+
+  return [
+    ...secretItems,
+    ...regularItems
+  ];
+}
+
+function isExportHighRareCard(card) {
+  return (
+    EXPORT_HIGH_RARITIES.has(
+      String(card.rarity || "")
+    ) ||
+    isSecretNumberedCard(card)
+  );
+}
+
+async function createSummaryImageBlob(
+  summaryItems,
+  onlyHighRare
+) {
+  const layout = onlyHighRare
+    ? {
+        columns: 4,
+        cardWidth: 250,
+        cardHeight: 350,
+        cellWidth: 286,
+        cellHeight: 424,
+        columnGap: 24,
+        rowGap: 26,
+        nameFontSize: 20,
+        infoFontSize: 15,
+        countFontSize: 24
+      }
+    : {
+        columns: 6,
+        cardWidth: 170,
+        cardHeight: 238,
+        cellWidth: 194,
+        cellHeight: 316,
+        columnGap: 18,
+        rowGap: 22,
+        nameFontSize: 15,
+        infoFontSize: 12,
+        countFontSize: 19
+      };
+
+  const padding = 48;
+  const headerHeight = 148;
+  const footerHeight = 56;
+  const rows = Math.ceil(
+    summaryItems.length / layout.columns
+  );
+
+  const logicalWidth =
+    padding * 2 +
+    layout.columns * layout.cellWidth +
+    (layout.columns - 1) * layout.columnGap;
+
+  const logicalHeight =
+    headerHeight +
+    rows * layout.cellHeight +
+    Math.max(0, rows - 1) * layout.rowGap +
+    footerHeight +
+    padding;
+
+  const scale = 2;
+  const canvas = document.createElement("canvas");
+  canvas.width = logicalWidth * scale;
+  canvas.height = logicalHeight * scale;
+
+  const context = canvas.getContext("2d");
+
+  if (!context) {
+    throw new Error("Canvasを初期化できませんでした。");
+  }
+
+  context.scale(scale, scale);
+  context.fillStyle = "#f3f6fb";
+  context.fillRect(0, 0, logicalWidth, logicalHeight);
+
+  drawExportHeader(
+    context,
+    logicalWidth,
+    onlyHighRare,
+    summaryItems.length
+  );
+
+  const loadedImages = await Promise.all(
+    summaryItems.map(item => {
+      return loadExportCardImage(
+        getCardImageUrl(item.card)
+      );
+    })
+  );
+
+  summaryItems.forEach((item, index) => {
+    const column = index % layout.columns;
+    const row = Math.floor(index / layout.columns);
+    const x =
+      padding +
+      column * (layout.cellWidth + layout.columnGap);
+    const y =
+      headerHeight +
+      row * (layout.cellHeight + layout.rowGap);
+
+    drawExportCard(
+      context,
+      item,
+      loadedImages[index],
+      x,
+      y,
+      layout
+    );
+  });
+
+  context.fillStyle = "#75839b";
+  context.font =
+    '600 14px "Noto Sans JP", "Yu Gothic", sans-serif';
+  context.textAlign = "right";
+  context.fillText(
+    "Pack Opening Simulator",
+    logicalWidth - padding,
+    logicalHeight - 22
+  );
+
+  return canvasToBlob(canvas);
+}
+
+function drawExportHeader(
+  context,
+  canvasWidth,
+  onlyHighRare,
+  itemCount
+) {
+  const packName =
+    selectedSet?.displayName ||
+    packRule?.displayName ||
+    "開封結果";
+
+  const title = onlyHighRare
+    ? `${packName} ハイレア一覧`
+    : `${packName} 出現カード一覧`;
+
+  const subtitle = [
+    `${currentPacks.length}パック開封`,
+    `${itemCount}種類`,
+    "カード右上の数字は出現枚数"
+  ].join(" / ");
+
+  context.fillStyle = "#1a2740";
+  context.font =
+    '800 34px "Noto Sans JP", "Yu Gothic", sans-serif';
+  context.textAlign = "left";
+  context.fillText(title, 48, 58);
+
+  context.fillStyle = "#5f6f89";
+  context.font =
+    '600 17px "Noto Sans JP", "Yu Gothic", sans-serif';
+  context.fillText(subtitle, 48, 96);
+
+  context.strokeStyle = "#d7deea";
+  context.lineWidth = 1;
+  context.beginPath();
+  context.moveTo(48, 124);
+  context.lineTo(canvasWidth - 48, 124);
+  context.stroke();
+}
+
+function drawExportCard(
+  context,
+  item,
+  image,
+  x,
+  y,
+  layout
+) {
+  const card = item.card;
+  const tilePadding = 12;
+  const tileWidth = layout.cellWidth;
+  const tileHeight = layout.cellHeight;
+
+  context.save();
+  context.shadowColor = "rgba(31, 52, 88, 0.12)";
+  context.shadowBlur = 14;
+  context.shadowOffsetY = 5;
+  drawRoundedRect(context, x, y, tileWidth, tileHeight, 16);
+  context.fillStyle = "#ffffff";
+  context.fill();
+  context.restore();
+
+  const imageX =
+    x + (tileWidth - layout.cardWidth) / 2;
+  const imageY = y + tilePadding;
+
+  context.save();
+  drawRoundedRect(
+    context,
+    imageX,
+    imageY,
+    layout.cardWidth,
+    layout.cardHeight,
+    11
+  );
+  context.clip();
+
+  if (image) {
+    context.drawImage(
+      image,
+      imageX,
+      imageY,
+      layout.cardWidth,
+      layout.cardHeight
+    );
+  } else {
+    drawExportImageFallback(
+      context,
+      card,
+      imageX,
+      imageY,
+      layout.cardWidth,
+      layout.cardHeight
+    );
+  }
+
+  context.restore();
+
+  drawExportCountBadge(
+    context,
+    item.count,
+    imageX + layout.cardWidth - 10,
+    imageY + 10,
+    layout.countFontSize
+  );
+
+  const textX = x + 12;
+  const textWidth = tileWidth - 24;
+  const nameY =
+    imageY + layout.cardHeight + 26;
+
+  context.fillStyle = "#1e293b";
+  context.font =
+    `800 ${layout.nameFontSize}px ` +
+    '"Noto Sans JP", "Yu Gothic", sans-serif';
+  context.textAlign = "left";
+
+  drawClampedCanvasText(
+    context,
+    String(card.name || "名称不明"),
+    textX,
+    nameY,
+    textWidth,
+    layout.nameFontSize + 5,
+    2
+  );
+
+  const infoY = tileHeight + y - 14;
+  const cardNo = formatCardNo(card);
+  const infoText = [
+    cardNo,
+    card.rarity || "不明"
+  ].filter(Boolean).join("  ");
+
+  context.fillStyle = "#687892";
+  context.font =
+    `600 ${layout.infoFontSize}px ` +
+    '"Noto Sans JP", "Yu Gothic", sans-serif';
+  context.fillText(infoText, textX, infoY);
+}
+
+function drawExportCountBadge(
+  context,
+  count,
+  rightX,
+  topY,
+  fontSize
+) {
+  const label = `×${count}`;
+  context.font =
+    `800 ${fontSize}px ` +
+    '"Noto Sans JP", "Yu Gothic", sans-serif';
+
+  const textWidth = context.measureText(label).width;
+  const width = Math.max(54, textWidth + 24);
+  const height = fontSize + 18;
+  const x = rightX - width;
+
+  drawRoundedRect(
+    context,
+    x,
+    topY,
+    width,
+    height,
+    height / 2
+  );
+
+  context.fillStyle = "rgba(21, 34, 58, 0.92)";
+  context.fill();
+  context.fillStyle = "#ffffff";
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.fillText(
+    label,
+    x + width / 2,
+    topY + height / 2 + 1
+  );
+  context.textBaseline = "alphabetic";
+  context.textAlign = "left";
+}
+
+function drawExportImageFallback(
+  context,
+  card,
+  x,
+  y,
+  width,
+  height
+) {
+  context.fillStyle = "#e7eef9";
+  context.fillRect(x, y, width, height);
+  context.fillStyle = "#37557e";
+  context.font =
+    '800 18px "Noto Sans JP", "Yu Gothic", sans-serif';
+  context.textAlign = "center";
+
+  drawClampedCanvasText(
+    context,
+    String(card.name || "CARD IMAGE"),
+    x + 14,
+    y + height / 2,
+    width - 28,
+    24,
+    3,
+    "center"
+  );
+
+  context.textAlign = "left";
+}
+
+function drawClampedCanvasText(
+  context,
+  text,
+  x,
+  y,
+  maxWidth,
+  lineHeight,
+  maxLines,
+  textAlign = "left"
+) {
+  const characters = Array.from(text);
+  const lines = [];
+  let currentLine = "";
+
+  for (const character of characters) {
+    const nextLine = currentLine + character;
+
+    if (
+      currentLine &&
+      context.measureText(nextLine).width > maxWidth
+    ) {
+      lines.push(currentLine);
+      currentLine = character;
+
+      if (lines.length === maxLines) {
+        break;
+      }
+    } else {
+      currentLine = nextLine;
+    }
+  }
+
+  if (currentLine && lines.length < maxLines) {
+    lines.push(currentLine);
+  }
+
+  const consumedLength = lines.join("").length;
+
+  if (
+    consumedLength < characters.length &&
+    lines.length > 0
+  ) {
+    let lastLine = lines[lines.length - 1];
+
+    while (
+      lastLine &&
+      context.measureText(lastLine + "…").width > maxWidth
+    ) {
+      lastLine = lastLine.slice(0, -1);
+    }
+
+    lines[lines.length - 1] = lastLine + "…";
+  }
+
+  const originalAlign = context.textAlign;
+  context.textAlign = textAlign;
+
+  const drawX =
+    textAlign === "center"
+      ? x + maxWidth / 2
+      : x;
+
+  lines.forEach((line, index) => {
+    context.fillText(
+      line,
+      drawX,
+      y + index * lineHeight
+    );
+  });
+
+  context.textAlign = originalAlign;
+}
+
+function drawRoundedRect(
+  context,
+  x,
+  y,
+  width,
+  height,
+  radius
+) {
+  const r = Math.min(radius, width / 2, height / 2);
+
+  context.beginPath();
+  context.moveTo(x + r, y);
+  context.lineTo(x + width - r, y);
+  context.quadraticCurveTo(
+    x + width,
+    y,
+    x + width,
+    y + r
+  );
+  context.lineTo(x + width, y + height - r);
+  context.quadraticCurveTo(
+    x + width,
+    y + height,
+    x + width - r,
+    y + height
+  );
+  context.lineTo(x + r, y + height);
+  context.quadraticCurveTo(
+    x,
+    y + height,
+    x,
+    y + height - r
+  );
+  context.lineTo(x, y + r);
+  context.quadraticCurveTo(x, y, x + r, y);
+  context.closePath();
+}
+
+function loadExportCardImage(imageUrl) {
+  return new Promise(resolve => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => resolve(null);
+    image.src = imageUrl;
+  });
+}
+
+function canvasToBlob(canvas) {
+  return new Promise(resolve => {
+    canvas.toBlob(
+      blob => resolve(blob),
+      "image/png"
+    );
+  });
+}
+
+function sanitizeExportFileName(value) {
+  return String(value || "export")
+    .replace(/[\\/:*?"<>|]/g, "_")
+    .replace(/\s+/g, "_");
+}
+
+if (exportHighRareImageButton) {
+  exportHighRareImageButton.addEventListener(
+    "click",
+    () => {
+      exportOpenedCardsImage({
+        onlyHighRare: true,
+        button: exportHighRareImageButton
+      });
+    }
+  );
+}
+
+if (exportAllCardsImageButton) {
+  exportAllCardsImageButton.addEventListener(
+    "click",
+    () => {
+      exportOpenedCardsImage({
+        onlyHighRare: false,
+        button: exportAllCardsImageButton
+      });
+    }
+  );
+}
+
+updateSummaryExportButtons();
 
 summaryDiv.addEventListener("click", handleCardTileClick);
 resultDiv.addEventListener("click", handleCardTileClick);
