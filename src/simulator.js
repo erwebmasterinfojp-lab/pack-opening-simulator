@@ -99,31 +99,47 @@ export function openPacks(cards, packCount, packRule = {}) {
 export function openBox(cards, packRule = {}) {
   const maxAttempts = getBoxGenerationMaxAttempts(packRule);
   let lastGeneratedPacks = [];
+  let lastViolations = [];
 
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-    const packs = generateSingleBox(cards, packRule);
+    const generatedBox = generateSingleBox(cards, packRule);
+    const packs = generatedBox.packs;
     lastGeneratedPacks = packs;
 
-    const result = applyBoxCardCopyLimits(
+    if (!generatedBox.trainerPlan.success) {
+      lastViolations = generatedBox.trainerPlan.violations;
+      continue;
+    }
+
+    const copyLimitResult = applyBoxCardCopyLimits(
       packs,
       cards,
       packRule
     );
 
-    if (result.success) {
+    const trainerRuleResult = validateTrainerBoxPlan(
+      packs,
+      generatedBox.trainerPlan,
+      packRule
+    );
+
+    if (copyLimitResult.success && trainerRuleResult.success) {
       return packs;
     }
 
-    if (attempt === maxAttempts) {
-      console.warn(
-        "BOX内カード枚数制約を完全には満たせませんでした。",
-        {
-          attempts: maxAttempts,
-          violations: result.violations
-        }
-      );
-    }
+    lastViolations = [
+      ...copyLimitResult.violations,
+      ...trainerRuleResult.violations
+    ];
   }
+
+  console.warn(
+    "BOX生成ルールを完全には満たせませんでした。",
+    {
+      attempts: maxAttempts,
+      violations: lastViolations
+    }
+  );
 
   return lastGeneratedPacks;
 }
@@ -141,6 +157,13 @@ function generateSingleBox(cards, packRule) {
     packsPerBox
   );
 
+  const trainerPlan = createTrainerBoxPlan({
+    pools,
+    packRule,
+    slot4Assignments,
+    packsPerBox
+  });
+
   const packs = [];
 
   for (let index = 0; index < packsPerBox; index += 1) {
@@ -151,12 +174,931 @@ function generateSingleBox(cards, packRule) {
       cards: buildPackCards({
         pools,
         packRule,
-        slot4Card
+        slot4Card,
+        packIndex: index,
+        trainerPlan
       })
     });
   }
 
-  return packs;
+  return {
+    packs,
+    trainerPlan
+  };
+}
+
+/**
+ * boxRules.trainerBoxRules が有効なパックだけ、
+ * 1BOX単位でC・Uトレーナーズの種類別枚数を先に決める。
+ *
+ * 設定がないパックは従来のtrainerChance方式をそのまま使うため、
+ * アビスアイなど既存パックの挙動は変わらない。
+ */
+function createTrainerBoxPlan({
+  pools,
+  packRule,
+  slot4Assignments,
+  packsPerBox
+}) {
+  const rule = getTrainerBoxRule(packRule);
+
+  if (!rule || rule.enabled !== true) {
+    return {
+      enabled: false,
+      success: true,
+      assignments: new Map(),
+      targetCounts: {},
+      pairedCardRules: [],
+      violations: []
+    };
+  }
+
+  const targetCounts = pickTrainerTargetCounts(
+    rule.countRanges
+  );
+
+  if (Object.keys(targetCounts).length === 0) {
+    return {
+      enabled: true,
+      success: false,
+      assignments: new Map(),
+      targetCounts: {},
+      pairedCardRules: getPairedTrainerCardRules(rule),
+      violations: [{
+        reason: "trainerCountRangeMissing"
+      }]
+    };
+  }
+
+  /*
+   * countRangesはC・Uの通常トレーナーズだけを対象とする。
+   * SRなど、4枠目に割り当てられた高レアトレーナーズは
+   * targetCountsから差し引かない。
+   */
+  const remainingCounts = {
+    ...targetCounts
+  };
+  const violations = [];
+
+  const trainerSlots = pickTrainerSlots({
+    packRule,
+    slot4Assignments,
+    packsPerBox,
+    count: sumObjectValues(remainingCounts)
+  });
+
+  if (!trainerSlots.success) {
+    return {
+      enabled: true,
+      success: false,
+      assignments: new Map(),
+      targetCounts,
+      pairedCardRules: getPairedTrainerCardRules(rule),
+      violations: trainerSlots.violations
+    };
+  }
+
+  const pairedCardRules = getPairedTrainerCardRules(rule);
+  const cardSequences = {};
+
+  for (const [trainerType, count] of Object.entries(remainingCounts)) {
+    const trainerPool = pools.lowTrainer.filter(card => {
+      return (
+        isCountedTrainerCard(card, rule) &&
+        String(card.trainerType || "") === trainerType
+      );
+    });
+
+    const pairRule = pairedCardRules.find(item => {
+      return item.trainerType === trainerType;
+    });
+
+    const sequenceResult = pairRule
+      ? buildPairedTrainerCardSequence(
+          trainerPool,
+          count,
+          pairRule,
+          packRule
+        )
+      : buildBalancedTrainerCardSequence(
+          trainerPool,
+          count,
+          packRule
+        );
+
+    if (!sequenceResult.success) {
+      violations.push(...sequenceResult.violations.map(item => {
+        return {
+          ...item,
+          trainerType
+        };
+      }));
+      continue;
+    }
+
+    cardSequences[trainerType] = sequenceResult.cards;
+  }
+
+  if (violations.length > 0) {
+    return {
+      enabled: true,
+      success: false,
+      assignments: new Map(),
+      targetCounts,
+      pairedCardRules,
+      violations
+    };
+  }
+
+  const trainerTypes = shuffleArray(
+    Object.entries(remainingCounts).flatMap(([trainerType, count]) => {
+      return Array.from({ length: count }, () => trainerType);
+    })
+  );
+
+  const assignments = new Map();
+  const usedCardIdsByPack = new Map();
+
+  for (let index = 0; index < trainerSlots.slots.length; index += 1) {
+    const slot = trainerSlots.slots[index];
+    const trainerType = trainerTypes[index];
+    const sequence = cardSequences[trainerType];
+
+    if (!sequence || sequence.length === 0) {
+      violations.push({
+        reason: "trainerCardSequenceEmpty",
+        trainerType
+      });
+      continue;
+    }
+
+    const usedIds = usedCardIdsByPack.get(slot.packIndex) || new Set();
+    let cardIndex = sequence.findIndex(card => {
+      return !usedIds.has(getCardId(card));
+    });
+
+    if (cardIndex < 0) {
+      violations.push({
+        reason: "duplicateTrainerCardInPack",
+        trainerType,
+        packIndex: slot.packIndex
+      });
+      continue;
+    }
+
+    const [card] = sequence.splice(cardIndex, 1);
+    assignments.set(getTrainerAssignmentKey(
+      slot.packIndex,
+      slot.slotName
+    ), card);
+
+    usedIds.add(getCardId(card));
+    usedCardIdsByPack.set(slot.packIndex, usedIds);
+  }
+
+  return {
+    enabled: true,
+    success: violations.length === 0,
+    assignments,
+    targetCounts,
+    pairedCardRules,
+    violations
+  };
+}
+
+function getTrainerBoxRule(packRule) {
+  const rule = getRuleValue(packRule, [
+    ["boxRules", "trainerBoxRules"],
+    ["trainerBoxRules"]
+  ]);
+
+  if (!rule || typeof rule !== "object" || Array.isArray(rule)) {
+    return null;
+  }
+
+  return rule;
+}
+
+function isTrainerBoxRuleEnabled(packRule) {
+  const rule = getTrainerBoxRule(packRule);
+  return Boolean(rule && rule.enabled === true);
+}
+
+function pickTrainerTargetCounts(countRanges) {
+  const targetCounts = {};
+
+  if (
+    !countRanges ||
+    typeof countRanges !== "object" ||
+    Array.isArray(countRanges)
+  ) {
+    return targetCounts;
+  }
+
+  for (
+    const [trainerType, rawRange] of
+    Object.entries(countRanges)
+  ) {
+    if (
+      !rawRange ||
+      typeof rawRange !== "object" ||
+      Array.isArray(rawRange)
+    ) {
+      continue;
+    }
+
+    const min = normalizeNonNegativeInteger(
+      rawRange.min,
+      0
+    );
+    const max = Math.max(
+      min,
+      normalizeNonNegativeInteger(
+        rawRange.max,
+        min
+      )
+    );
+
+    targetCounts[trainerType] = pickRandomInteger(
+      min,
+      max
+    );
+  }
+
+  return targetCounts;
+}
+
+function pickRandomInteger(min, max) {
+  return (
+    min +
+    Math.floor(Math.random() * (max - min + 1))
+  );
+}
+
+function getCountedTrainerRarities(rule) {
+  const rarities = Array.isArray(rule?.countedRarities)
+    ? rule.countedRarities
+    : ["C", "U"];
+
+  return new Set(
+    rarities.map(value => String(value))
+  );
+}
+
+function isCountedTrainerCard(card, rule) {
+  return (
+    isTrainer(card) &&
+    getCountedTrainerRarities(rule).has(
+      String(card.rarity || "")
+    )
+  );
+}
+
+function pickTrainerSlots({
+  packRule,
+  slot4Assignments,
+  packsPerBox,
+  count
+}) {
+  const maxTrainerCardsPerPack = getMaxTrainerCardsPerPack(packRule);
+  const trainerCountByPack = new Map();
+  const candidates = [];
+
+  for (let packIndex = 0; packIndex < packsPerBox; packIndex += 1) {
+    const slot4Card = slot4Assignments.get(packIndex) || null;
+    const fixedTrainerCount = isTrainer(slot4Card) ? 1 : 0;
+    trainerCountByPack.set(packIndex, fixedTrainerCount);
+
+    for (let slotNumber = 1; slotNumber <= 5; slotNumber += 1) {
+      const slotName = `slot${slotNumber}`;
+      const trainerRule = getTrainerSlotRule(packRule, slotName);
+
+      if (!trainerRule.allowTrainer) {
+        continue;
+      }
+
+      if (slotName === "slot4" && slot4Card) {
+        continue;
+      }
+
+      candidates.push({
+        packIndex,
+        slotName,
+        slotNumber,
+        weight: Math.max(0.0001, trainerRule.trainerChance)
+      });
+    }
+  }
+
+  const selectedSlots = [];
+  const remainingCandidates = [...candidates];
+
+  while (selectedSlots.length < count) {
+    const availableCandidates = remainingCandidates.filter(candidate => {
+      return (
+        (trainerCountByPack.get(candidate.packIndex) || 0) <
+        maxTrainerCardsPerPack
+      );
+    });
+
+    if (availableCandidates.length === 0) {
+      return {
+        success: false,
+        slots: selectedSlots,
+        violations: [{
+          reason: "trainerSlotCapacityShortage",
+          requestedCount: count,
+          assignedCount: selectedSlots.length,
+          maxTrainerCardsPerPack
+        }]
+      };
+    }
+
+    const selected = pickWeightedItem(
+      availableCandidates,
+      candidate => candidate.weight
+    );
+
+    selectedSlots.push(selected);
+    trainerCountByPack.set(
+      selected.packIndex,
+      (trainerCountByPack.get(selected.packIndex) || 0) + 1
+    );
+
+    const removeIndex = remainingCandidates.findIndex(candidate => {
+      return (
+        candidate.packIndex === selected.packIndex &&
+        candidate.slotName === selected.slotName
+      );
+    });
+
+    if (removeIndex >= 0) {
+      remainingCandidates.splice(removeIndex, 1);
+    }
+  }
+
+  selectedSlots.sort((a, b) => {
+    if (a.packIndex !== b.packIndex) {
+      return a.packIndex - b.packIndex;
+    }
+
+    return a.slotNumber - b.slotNumber;
+  });
+
+  return {
+    success: true,
+    slots: selectedSlots,
+    violations: []
+  };
+}
+
+function buildBalancedTrainerCardSequence(
+  pool,
+  count,
+  packRule
+) {
+  if (count === 0) {
+    return {
+      success: true,
+      cards: [],
+      violations: []
+    };
+  }
+
+  if (!Array.isArray(pool) || pool.length === 0) {
+    return {
+      success: false,
+      cards: [],
+      violations: [{
+        reason: "trainerCardPoolEmpty",
+        requestedCount: count
+      }]
+    };
+  }
+
+  const counts = new Map();
+  const cards = [];
+  let minimumRequired = 0;
+  let maximumCapacity = 0;
+
+  for (const card of pool) {
+    const limit = getCardCopyLimit(card, packRule);
+    minimumRequired += limit.minPerCard;
+    maximumCapacity += limit.maxPerCard;
+    counts.set(getCardId(card), 0);
+  }
+
+  if (count < minimumRequired || count > maximumCapacity) {
+    return {
+      success: false,
+      cards: [],
+      violations: [{
+        reason: "trainerCardCopyLimitCapacity",
+        requestedCount: count,
+        minimumRequired,
+        maximumCapacity
+      }]
+    };
+  }
+
+  for (const card of shuffleArray(pool)) {
+    const limit = getCardCopyLimit(card, packRule);
+
+    for (let i = 0; i < limit.minPerCard; i += 1) {
+      cards.push(card);
+      counts.set(
+        getCardId(card),
+        (counts.get(getCardId(card)) || 0) + 1
+      );
+    }
+  }
+
+  while (cards.length < count) {
+    const candidates = pool.filter(card => {
+      const limit = getCardCopyLimit(card, packRule);
+      return (counts.get(getCardId(card)) || 0) < limit.maxPerCard;
+    });
+
+    if (candidates.length === 0) {
+      return {
+        success: false,
+        cards,
+        violations: [{
+          reason: "trainerCardSequenceCapacityShortage",
+          requestedCount: count,
+          assignedCount: cards.length
+        }]
+      };
+    }
+
+    candidates.sort((a, b) => {
+      return (
+        (counts.get(getCardId(a)) || 0) -
+        (counts.get(getCardId(b)) || 0)
+      );
+    });
+
+    const lowestCount = counts.get(getCardId(candidates[0])) || 0;
+    const balancedCandidates = candidates.filter(card => {
+      return (counts.get(getCardId(card)) || 0) === lowestCount;
+    });
+    const selected = pickRandom(balancedCandidates);
+
+    cards.push(selected);
+    counts.set(
+      getCardId(selected),
+      (counts.get(getCardId(selected)) || 0) + 1
+    );
+  }
+
+  return {
+    success: true,
+    cards: shuffleArray(cards),
+    violations: []
+  };
+}
+
+function buildPairedTrainerCardSequence(
+  pool,
+  count,
+  pairRule,
+  packRule
+) {
+  if (count === 0) {
+    return {
+      success: true,
+      cards: [],
+      violations: []
+    };
+  }
+
+  const pairGroups = buildPairedCardGroups(pool, pairRule);
+  const pairedCardIds = new Set(
+    pairGroups.flatMap(group => {
+      return group.cards.map(card => getCardId(card));
+    })
+  );
+  const unpairedCards = pool.filter(card => {
+    return !pairedCardIds.has(getCardId(card));
+  });
+
+  if (pairGroups.length === 0) {
+    return buildBalancedTrainerCardSequence(
+      pool,
+      count,
+      packRule
+    );
+  }
+
+  const groupLimits = pairGroups.map(group => {
+    const limits = group.cards.map(card => {
+      return getCardCopyLimit(card, packRule);
+    });
+
+    return {
+      group,
+      minBlocks: Math.max(...limits.map(limit => limit.minPerCard)),
+      maxBlocks: Math.min(...limits.map(limit => limit.maxPerCard))
+    };
+  });
+
+  const minPairBlocks = groupLimits.reduce((sum, item) => {
+    return sum + item.minBlocks;
+  }, 0);
+  const maxPairBlocks = groupLimits.reduce((sum, item) => {
+    return sum + item.maxBlocks;
+  }, 0);
+
+  const unpairedMin = unpairedCards.reduce((sum, card) => {
+    return sum + getCardCopyLimit(card, packRule).minPerCard;
+  }, 0);
+  const unpairedMax = unpairedCards.reduce((sum, card) => {
+    return sum + getCardCopyLimit(card, packRule).maxPerCard;
+  }, 0);
+
+  const feasibleUnpairedCounts = [];
+
+  for (
+    let unpairedCount = unpairedMin;
+    unpairedCount <= unpairedMax;
+    unpairedCount += 1
+  ) {
+    const pairedCardCount = count - unpairedCount;
+
+    if (pairedCardCount < 0 || pairedCardCount % 2 !== 0) {
+      continue;
+    }
+
+    const pairBlockCount = pairedCardCount / 2;
+
+    if (
+      pairBlockCount >= minPairBlocks &&
+      pairBlockCount <= maxPairBlocks
+    ) {
+      feasibleUnpairedCounts.push(unpairedCount);
+    }
+  }
+
+  if (feasibleUnpairedCounts.length === 0) {
+    return {
+      success: false,
+      cards: [],
+      violations: [{
+        reason: "pairedTrainerSequenceCapacity",
+        requestedCount: count,
+        unpairedMin,
+        unpairedMax,
+        minPairBlocks,
+        maxPairBlocks
+      }]
+    };
+  }
+
+  const selectedUnpairedCount = pickRandom(feasibleUnpairedCounts);
+  const targetPairBlockCount =
+    (count - selectedUnpairedCount) / 2;
+  const pairBlockCounts = new Map();
+  const pairBlocks = [];
+
+  for (const item of groupLimits) {
+    pairBlockCounts.set(item.group.baseName, item.minBlocks);
+
+    for (let i = 0; i < item.minBlocks; i += 1) {
+      pairBlocks.push(createPairBlock(item.group.cards));
+    }
+  }
+
+  while (pairBlocks.length < targetPairBlockCount) {
+    const candidates = groupLimits.filter(item => {
+      return (
+        (pairBlockCounts.get(item.group.baseName) || 0) <
+        item.maxBlocks
+      );
+    });
+
+    if (candidates.length === 0) {
+      return {
+        success: false,
+        cards: [],
+        violations: [{
+          reason: "pairedTrainerBlockShortage",
+          requestedBlocks: targetPairBlockCount,
+          assignedBlocks: pairBlocks.length
+        }]
+      };
+    }
+
+    candidates.sort((a, b) => {
+      return (
+        (pairBlockCounts.get(a.group.baseName) || 0) -
+        (pairBlockCounts.get(b.group.baseName) || 0)
+      );
+    });
+
+    const lowestCount =
+      pairBlockCounts.get(candidates[0].group.baseName) || 0;
+    const balancedCandidates = candidates.filter(item => {
+      return (
+        (pairBlockCounts.get(item.group.baseName) || 0) ===
+        lowestCount
+      );
+    });
+    const selected = pickRandom(balancedCandidates);
+
+    pairBlocks.push(createPairBlock(selected.group.cards));
+    pairBlockCounts.set(
+      selected.group.baseName,
+      (pairBlockCounts.get(selected.group.baseName) || 0) + 1
+    );
+  }
+
+  const unpairedResult = buildBalancedTrainerCardSequence(
+    unpairedCards,
+    selectedUnpairedCount,
+    packRule
+  );
+
+  if (!unpairedResult.success) {
+    return unpairedResult;
+  }
+
+  const blocks = [
+    ...pairBlocks,
+    ...unpairedResult.cards.map(card => [card])
+  ];
+
+  return {
+    success: true,
+    cards: shuffleArray(blocks).flat(),
+    violations: []
+  };
+}
+
+function buildPairedCardGroups(pool, pairRule) {
+  const suffixes = Array.isArray(pairRule.nameSuffixes)
+    ? pairRule.nameSuffixes.map(value => String(value))
+    : ["-L", "-R"];
+  const groups = new Map();
+
+  for (const card of pool) {
+    const pairInfo = getPairedCardInfo(card, suffixes);
+
+    if (!pairInfo) {
+      continue;
+    }
+
+    if (!groups.has(pairInfo.baseName)) {
+      groups.set(pairInfo.baseName, new Map());
+    }
+
+    groups.get(pairInfo.baseName).set(pairInfo.suffix, card);
+  }
+
+  return [...groups.entries()]
+    .filter(([, cardsBySuffix]) => {
+      return suffixes.every(suffix => cardsBySuffix.has(suffix));
+    })
+    .map(([baseName, cardsBySuffix]) => {
+      return {
+        baseName,
+        cards: suffixes.map(suffix => cardsBySuffix.get(suffix))
+      };
+    });
+}
+
+function createPairBlock(cards) {
+  return Math.random() < 0.5
+    ? [...cards]
+    : [...cards].reverse();
+}
+
+function getPairedCardInfo(card, suffixes) {
+  const name = String(card.name || "");
+  const suffix = suffixes.find(value => name.endsWith(value));
+
+  if (!suffix) {
+    return null;
+  }
+
+  return {
+    baseName: name.slice(0, -suffix.length),
+    suffix
+  };
+}
+
+function getPairedTrainerCardRules(rule) {
+  const rules = rule && Array.isArray(rule.pairedCardRules)
+    ? rule.pairedCardRules
+    : [];
+
+  return rules
+    .filter(item => {
+      return (
+        item &&
+        item.enabled !== false &&
+        typeof item.trainerType === "string"
+      );
+    })
+    .map(item => {
+      return {
+        ...item,
+        nameSuffixes: Array.isArray(item.nameSuffixes)
+          ? item.nameSuffixes.map(value => String(value))
+          : ["-L", "-R"]
+      };
+    });
+}
+
+function getCardCopyLimit(card, packRule) {
+  const rarityLimits = getBoxCardCopyLimits(packRule);
+  const limit = rarityLimits[card.rarity];
+
+  if (!limit) {
+    return {
+      minPerCard: 0,
+      maxPerCard: Number.POSITIVE_INFINITY
+    };
+  }
+
+  return limit;
+}
+
+function getTrainerAssignmentKey(packIndex, slotName) {
+  return `${packIndex}:${slotName}`;
+}
+
+function sumObjectValues(object) {
+  return Object.values(object).reduce((sum, value) => {
+    return sum + Number(value || 0);
+  }, 0);
+}
+
+function pickWeightedItem(items, getWeight) {
+  if (!Array.isArray(items) || items.length === 0) {
+    return null;
+  }
+
+  const weightedItems = items
+    .map(item => {
+      return {
+        item,
+        weight: Number(getWeight(item))
+      };
+    })
+    .filter(entry => {
+      return Number.isFinite(entry.weight) && entry.weight > 0;
+    });
+
+  if (weightedItems.length === 0) {
+    return pickRandom(items);
+  }
+
+  const totalWeight = weightedItems.reduce((sum, entry) => {
+    return sum + entry.weight;
+  }, 0);
+  let randomValue = Math.random() * totalWeight;
+
+  for (const entry of weightedItems) {
+    randomValue -= entry.weight;
+
+    if (randomValue <= 0) {
+      return entry.item;
+    }
+  }
+
+  return weightedItems[weightedItems.length - 1].item;
+}
+
+function validateTrainerBoxPlan(packs, trainerPlan, packRule) {
+  if (!trainerPlan.enabled) {
+    return {
+      success: true,
+      violations: []
+    };
+  }
+
+  const violations = [];
+  const actualCounts = {};
+  const rule = getTrainerBoxRule(packRule);
+
+  for (const pack of packs) {
+    const trainerCount = countTrainerCards(pack.cards);
+
+    if (trainerCount > getMaxTrainerCardsPerPack(packRule)) {
+      violations.push({
+        reason: "trainerCountPerPackExceeded",
+        packNo: pack.packNo,
+        trainerCount
+      });
+    }
+
+    for (const card of pack.cards) {
+      if (!isCountedTrainerCard(card, rule)) {
+        continue;
+      }
+
+      const trainerType = String(card.trainerType || "");
+
+      if (trainerType in trainerPlan.targetCounts) {
+        actualCounts[trainerType] =
+          (actualCounts[trainerType] || 0) + 1;
+      }
+    }
+  }
+
+  for (
+    const [trainerType, targetCount] of
+    Object.entries(trainerPlan.targetCounts)
+  ) {
+    const actualCount = actualCounts[trainerType] || 0;
+
+    if (actualCount !== targetCount) {
+      violations.push({
+        reason: "trainerTypeCountMismatch",
+        trainerType,
+        targetCount,
+        actualCount
+      });
+    }
+  }
+
+  for (const pairRule of trainerPlan.pairedCardRules) {
+    violations.push(...validatePairedTrainerSequence(
+      packs,
+      pairRule,
+      rule
+    ));
+  }
+
+  return {
+    success: violations.length === 0,
+    violations
+  };
+}
+
+function validatePairedTrainerSequence(packs, pairRule, rule) {
+  const suffixes = pairRule.nameSuffixes;
+  const trainerType = pairRule.trainerType;
+  const violations = [];
+  let expectedCounterpart = null;
+
+  for (const pack of packs) {
+    for (let slotIndex = 0; slotIndex < pack.cards.length; slotIndex += 1) {
+      const card = pack.cards[slotIndex];
+
+      if (
+        !isCountedTrainerCard(card, rule) ||
+        String(card.trainerType || "") !== trainerType
+      ) {
+        continue;
+      }
+
+      const pairInfo = getPairedCardInfo(card, suffixes);
+
+      if (expectedCounterpart) {
+        if (
+          !pairInfo ||
+          pairInfo.baseName !== expectedCounterpart.baseName ||
+          pairInfo.suffix !== expectedCounterpart.suffix
+        ) {
+          violations.push({
+            reason: "pairedTrainerCounterpartMismatch",
+            packNo: pack.packNo,
+            slotIndex,
+            expected: expectedCounterpart,
+            actualName: card.name
+          });
+          expectedCounterpart = null;
+          continue;
+        }
+
+        expectedCounterpart = null;
+        continue;
+      }
+
+      if (!pairInfo) {
+        continue;
+      }
+
+      const counterpartSuffix = suffixes.find(suffix => {
+        return suffix !== pairInfo.suffix;
+      });
+
+      expectedCounterpart = {
+        baseName: pairInfo.baseName,
+        suffix: counterpartSuffix
+      };
+    }
+  }
+
+  if (expectedCounterpart) {
+    violations.push({
+      reason: "pairedTrainerCounterpartMissingAtEnd",
+      expected: expectedCounterpart
+    });
+  }
+
+  return violations;
 }
 
 /**
@@ -433,6 +1375,16 @@ function findCardCountLimitReplacement(
         continue;
       }
 
+      if (
+        !areCopyLimitCardsCompatible(
+          sourceCard,
+          targetCard,
+          packRule
+        )
+      ) {
+        continue;
+      }
+
       for (
         let packIndex = 0;
         packIndex < packs.length;
@@ -499,6 +1451,32 @@ function findCardCountLimitReplacement(
   });
 
   return pickRandom(bestCandidates);
+}
+
+function areCopyLimitCardsCompatible(
+  sourceCard,
+  targetCard,
+  packRule
+) {
+  if (!isTrainerBoxRuleEnabled(packRule)) {
+    return true;
+  }
+
+  const sourceIsTrainer = isTrainer(sourceCard);
+  const targetIsTrainer = isTrainer(targetCard);
+
+  if (sourceIsTrainer !== targetIsTrainer) {
+    return false;
+  }
+
+  if (!sourceIsTrainer) {
+    return true;
+  }
+
+  return (
+    String(sourceCard.trainerType || "") ===
+    String(targetCard.trainerType || "")
+  );
 }
 
 function countCardsInPacks(packs) {
@@ -768,9 +1746,15 @@ for (const card of boxHitCards) {
   const pickedCards = [];
   const localBlockedIds = new Set(blockedIds);
 
-  const rarityWeights = getBoxHitRarityWeights(packRule);
+  const firstHitRarityWeights = getBoxHitRarityWeights(packRule);
+  const additionalHitRarityWeights =
+    getAdditionalBoxHitRarityWeights(packRule) ||
+    firstHitRarityWeights;
 
-  if (!rarityWeights || Object.keys(rarityWeights).length === 0) {
+  if (
+    !firstHitRarityWeights ||
+    Object.keys(firstHitRarityWeights).length === 0
+  ) {
     throw new Error(
       "高レア抽選設定 boxHit.rarityWeights が見つかりません。data/rules/{setCode}.json を確認してください。"
     );
@@ -785,16 +1769,25 @@ for (const card of boxHitCards) {
       break;
     }
 
+    // 1枚目は通常の重み、2枚目以降は追加ヒット専用の重みを使う。
+    // ルールJSONで additionalHitRarityWeights を { "SR": 1 } とすれば、
+    // 2枚箱の追加分はSRだけになる。
+    const currentRarityWeights =
+      i === 0
+        ? firstHitRarityWeights
+        : additionalHitRarityWeights;
+
     const selectedRarity = pickWeightedRarity(
       availableCards,
-      rarityWeights
+      currentRarityWeights
     );
 
     if (!selectedRarity) {
       console.warn(
         "抽選可能な高レアリティがありません。",
         {
-          rarityWeights,
+          hitIndex: i + 1,
+          rarityWeights: currentRarityWeights,
           availableRarities: [
             ...new Set(availableCards.map(card => card.rarity))
           ]
@@ -876,6 +1869,16 @@ function getBoxHitRarityWeights(packRule) {
   ]);
 }
 
+function getAdditionalBoxHitRarityWeights(packRule) {
+  return getRuleValue(packRule, [
+    ["boxRules", "boxHit", "additionalHitRarityWeights"],
+    ["boxRules", "boxHit", "extraHitRarityWeights"],
+    ["boxRules", "boxHit", "secondHitRarityWeights"],
+    ["boxHit", "additionalHitRarityWeights"],
+    ["additionalBoxHitRarityWeights"]
+  ]);
+}
+
   // RR: basic target is 2 mega/primal ex + 2 normal ex.
   // If a 5th RR appears, it is chosen from the remaining RR cards.
   const rrCards = pickBoxRrCards(
@@ -911,7 +1914,13 @@ function getBoxHitRarityWeights(packRule) {
   };
 }
 
-function buildPackCards({ pools, packRule, slot4Card }) {
+function buildPackCards({
+  pools,
+  packRule,
+  slot4Card,
+  packIndex,
+  trainerPlan
+}) {
   const packCards = [];
   const usedCardIds = new Set();
   const reservedCardIds = new Set();
@@ -952,6 +1961,25 @@ function buildPackCards({ pools, packRule, slot4Card }) {
   };
 
   const pickNormalSlotCard = (slotName, nonTrainerPool) => {
+    const plannedTrainerCard = trainerPlan.enabled
+      ? trainerPlan.assignments.get(
+          getTrainerAssignmentKey(packIndex, slotName)
+        )
+      : null;
+
+    if (plannedTrainerCard) {
+      return plannedTrainerCard;
+    }
+
+    // BOX単位のトレーナー枚数ルールが有効な場合、
+    // 計画にない枠では追加のトレーナー抽選を行わない。
+    if (trainerPlan.enabled) {
+      return pickUniqueCard(
+        nonTrainerPool,
+        getBlockedIdsForRandomPick()
+      );
+    }
+
     const trainerRule = getTrainerSlotRule(packRule, slotName);
     const trainerCount = countTrainerCards(packCards);
     const maxTrainerCards = getMaxTrainerCardsPerPack(packRule);
@@ -1021,6 +2049,7 @@ function buildPackCards({ pools, packRule, slot4Card }) {
     const maxTrainerCards = getMaxTrainerCardsPerPack(packRule);
 
     const trainerAllowedForFallback =
+      !trainerPlan.enabled &&
       trainerRule.allowTrainer &&
       trainerCount + getReservedTrainerCount() < maxTrainerCards;
 
@@ -1492,13 +2521,30 @@ function countTrainerCards(cards) {
 }
 
 function getCardId(card) {
+  const name = String(card.name || "");
+
+  // 2枚1組カードは公式IDが共通でも別カードとして扱う。
+  if (name.endsWith("-L") || name.endsWith("-R")) {
+    return [
+      card.setCode || "",
+      card.officialCardId || "",
+      card.cardNo || "",
+      card.rarity || "",
+      name
+    ].join("_");
+  }
+
   return String(
     card.officialCardId ||
-    `${card.setCode || ""}_${card.cardNo || ""}_${card.rarity || ""}_${card.name || ""}`
+    `${card.setCode || ""}_${card.cardNo || ""}_${card.rarity || ""}_${name}`
   );
 }
 
 function isTrainer(card) {
+  if (!card) {
+    return false;
+  }
+
   return String(card.category || "").toLowerCase() === "trainer";
 }
 
