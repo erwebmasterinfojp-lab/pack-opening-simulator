@@ -23,7 +23,7 @@
       "description": "各パック5枚目の枠。BOX全体の封入枚数を先に決めてから30パックへ分配する。"
     },
     "boxHit": {
-      "description": "1BOXに1枚程度の当たり枠。2枚箱の場合は2枚。",
+      "description": "1BOXに1枚程度の通常ハイレア枠。2枚箱では1枚目を通常抽選し、追加の2枚目はSRのみ。",
       "countDistribution": [
         {
           "count": 1,
@@ -39,7 +39,10 @@
         "SAR": 26,
         "MUR": 2
       },
-      "extraHitRCountAdjustment": -1
+      "extraHitRCountAdjustment": -1,
+      "additionalHitRarityWeights": {
+        "SR": 1
+      }
     },
     "fixedBoxInclusions": [
       {
@@ -86,7 +89,44 @@
         "maxPerCard": 3
       }
     },
-    "boxGenerationMaxAttempts": 40
+    "boxGenerationMaxAttempts": 40,
+    "trainerBoxRules": {
+      "enabled": true,
+      "description": "実測9BOXを基準に、C・Uの通常トレーナーズだけを対象として、種別ごとの枚数をmin～maxの範囲でBOX単位に決める。SRなどの高レアトレーナーズはこの枚数に含めない。",
+      "pairedCardRules": [
+        {
+          "enabled": true,
+          "trainerType": "スタジアム",
+          "nameSuffixes": [
+            "-L",
+            "-R"
+          ],
+          "description": "伝説スタジアムの片側が出た場合、次のスタジアム枠は同名のもう片側にする。同一パック内で連続する場合も許可する。"
+        }
+      ],
+      "countedRarities": [
+        "C",
+        "U"
+      ],
+      "countRanges": {
+        "サポート": {
+          "min": 7,
+          "max": 10
+        },
+        "グッズ": {
+          "min": 3,
+          "max": 5
+        },
+        "どうぐ": {
+          "min": 3,
+          "max": 5
+        },
+        "スタジアム": {
+          "min": 8,
+          "max": 14
+        }
+      }
+    }
   },
   "notes": [
     "封入率は参考情報とユーザー仮説をもとにした推定設定。",
@@ -94,14 +134,17 @@
     "2枚箱の場合、extraHitRCountAdjustment=-1 によりR枠を1枚減らす。",
     "MEGAシリーズの確定SR枠は、グッズ・どうぐ・エネルギーSRの中から合計1枚とする。",
     "シールド戦向け設定として、通常トレーナーズは1〜5枠目で候補とし、1パック最大2枚とする。",
-    "1BOX内で同一Cは1～4枚、同一Uは1～3枚になるよう補正する。"
+    "1BOX内で同一Cは1～4枚、同一Uは1～3枚になるよう補正する。",
+    "通常ハイレア2枚箱では、1枚目はSR・SAR・MURから抽選し、追加の2枚目はSRのみとする。",
+    "伝説スタジアム-L/Rは、片側の次に出るスタジアムを同名の反対側に固定する。",
+    "ストームエメラルダのみ、C・Uの通常トレーナーズを対象に、サポート7～10枚、グッズ3～5枚、どうぐ3～5枚、スタジアム8～15枚をBOX単位で抽選する。SRは集計対象外。"
   ],
   "packRules": {
     "maxTrainerCardsPerPack": 2,
     "slotRules": {
       "slot1": {
         "allowTrainer": true,
-        "trainerChance": 0.10
+        "trainerChance": 0.15
       },
       "slot2": {
         "allowTrainer": true,
