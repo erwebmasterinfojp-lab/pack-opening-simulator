@@ -14,5 +14,13 @@
     "cardMasterPath": "./data/cards/M6.json",
     "rulePath": "./data/rules/M6.json",
     "thumbnailPath": "../assets/packs/M6-ストームエメラルダ.png"
+    },
+    {
+    "setCode": "M6a",
+    "displayName": "30th CELEBRATION",
+    "description": "ポケモンカードゲーム30周年記念の拡張パック。1パック6枚入り。",
+    "cardMasterPath": "./data/cards/M6a.json",
+    "rulePath": "./data/rules/M6a.json",
+    "thumbnailPath": "./assets/packs/M6a-30th CELEBRATION.webp"
     }
 ]

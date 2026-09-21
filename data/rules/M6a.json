@@ -1,0 +1,103 @@
+{
+  "setCode": "M6a",
+  "displayName": "M6a 30th CELEBRATION",
+  "cardsPerPack": 6,
+  "packsPerBox": 20,
+  "baseSlots": [
+    {
+      "name": "randomSlots",
+      "description": "通常・RR・AR・30周年復刻・SAR/FUR・RGBから抽選する推定枠",
+      "count": 4
+    },
+    {
+      "name": "pikachuSlot",
+      "description": "30周年特別仕様のピカチュウ確定枠",
+      "rarityGroup": "PIKACHU",
+      "count": 1
+    },
+    {
+      "name": "energySlot",
+      "description": "YOSHIROTTEN氏デザインの基本エネルギー確定枠",
+      "rarityGroup": "ENERGY",
+      "count": 1
+    }
+  ],
+  "boxRules": {
+    "enabled": true,
+    "packsPerBox": 20,
+    "boxRarityCounts": [
+      {
+        "rarity": "H",
+        "count": 68,
+        "countWhenRgb": 67
+      },
+      {
+        "rarity": "RR",
+        "count": 5
+      },
+      {
+        "rarity": "AR",
+        "count": 4
+      },
+      {
+        "rarity": "30th",
+        "count": 2
+      },
+      {
+        "rarityGroup": "SAR_OR_FUR",
+        "count": 1
+      },
+      {
+        "rarity": "RGB",
+        "count": 0,
+        "countWhenRgb": 1,
+        "boxRate": {
+          "numerator": 1,
+          "denominator": 120
+        }
+      },
+      {
+        "rarity": "PIKACHU",
+        "count": 20
+      },
+      {
+        "rarity": "ENERGY",
+        "count": 20
+      }
+    ]
+  },
+  "packRules": {
+    "generationStrategy": "m6a30thCelebration",
+    "celebrationRules": {
+      "randomSlotsPerPack": 4,
+      "boxCounts": {
+        "RR": 5,
+        "AR": 4,
+        "30th": 2,
+        "highHit": 1
+      },
+      "highHitRarityWeights": {
+        "SAR": 90,
+        "FUR": 10
+      },
+      "rgbEnabled": true,
+      "rgbBoxRate": {
+        "numerator": 1,
+        "denominator": 120
+      },
+      "rgbColorWeights": {
+        "red": 1,
+        "green": 1,
+        "blue": 1
+      }
+    }
+  },
+  "notes": [
+    "公式商品仕様に基づき、1パック6枚、1BOX20パックとしている。",
+    "公式商品仕様に基づき、各パックに30周年特別仕様のピカチュウ1枚と基本エネルギー1枚を確定封入する。",
+    "残り4枠は公式発表の封入率ではなく、発売直後の開封報告を参考にした推定設定。1BOXあたりH68枚、RR5枚、AR4枚、30周年復刻2枚、SARまたはFUR1枚としている。",
+    "SAR/FUR枠はSAR 90%、FUR 10%の推定重みで抽選する。FURの公式封入率は公表されていない。",
+    "RGBミュウは通常H1枚を置き換える独立枠として、ユーザー指定値の120BOXに1枚で抽選する。RGB当選時もSAR/FUR枠は維持する。",
+    "RGB当選時は赤・緑・青の3種を同率（各1/3）で抽選する。公式封入率ではなくユーザー指定の仮説値である。"
+  ]
+}

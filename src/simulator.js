@@ -1,11 +1,16 @@
 const RARITY_DISPLAY_ORDER = [
   "C",
   "U",
+  "H",
   "R",
   "RR",
+  "PIKACHU",
   "AR",
+  "30th",
   "SR",
   "SAR",
+  "FUR",
+  "RGB",
   "UR",
   "MUR",
   "BWR",
@@ -14,13 +19,17 @@ const RARITY_DISPLAY_ORDER = [
   "MM",
   "ACE",
   "HR",
+  "ENERGY",
   "不明"
 ];
 
 const HIGH_RARITY_VALUES = new Set([
   "AR",
+  "30th",
   "SR",
   "SAR",
+  "FUR",
+  "RGB",
   "UR",
   "MUR",
   "BWR",
@@ -36,6 +45,8 @@ const HIGH_RARITY_VALUES = new Set([
 const BOX_HIT_RARITY_VALUES = new Set([
   "SR",
   "SAR",
+  "FUR",
+  "RGB",
   "UR",
   "MUR",
   "BWR",
@@ -63,7 +74,8 @@ export function openPacks(cards, packCount, packRule = {}) {
   const normalizedCards = normalizeCards(cards);
   const packsPerBox = getPacksPerBox(packRule);
 
-  // 15 packs are treated as opening half of one generated box.
+  // A partial opening is sampled from one generated box so that the
+  // set-specific box collation is preserved.
   if (packCount <= packsPerBox) {
     const boxPacks = openBox(normalizedCards, packRule);
 
@@ -97,6 +109,10 @@ export function openPacks(cards, packCount, packRule = {}) {
 }
 
 export function openBox(cards, packRule = {}) {
+  if (getPackGenerationStrategy(packRule) === "m6a30thCelebration") {
+    return openM6aCelebrationBox(cards, packRule);
+  }
+
   const maxAttempts = getBoxGenerationMaxAttempts(packRule);
   let lastGeneratedPacks = [];
   let lastViolations = [];
@@ -142,6 +158,268 @@ export function openBox(cards, packRule = {}) {
   );
 
   return lastGeneratedPacks;
+}
+
+function getPackGenerationStrategy(packRule) {
+  return getRuleValue(packRule, [
+    ["packRules", "generationStrategy"],
+    ["generationStrategy"]
+  ]);
+}
+
+/**
+ * 30th CELEBRATION専用のBOX生成。
+ *
+ * 公式に確認できる「1パック6枚」「ピカチュウ1枚確定」
+ * 「基本エネルギー1枚確定」を固定枠として扱う。
+ * 残り4枠のBOX内訳はルールJSONの推定設定を参照する。
+ */
+function openM6aCelebrationBox(cards, packRule) {
+  const packsPerBox = getPacksPerBox(packRule);
+  const rule = getRuleValue(packRule, [
+    ["packRules", "celebrationRules"],
+    ["celebrationRules"]
+  ]) || {};
+  const randomSlotsPerPack = normalizePositiveInteger(
+    rule.randomSlotsPerPack,
+    4
+  );
+  const boxCounts = rule.boxCounts || {};
+  const rrCount = normalizeNonNegativeInteger(boxCounts.RR, 5);
+  const arCount = normalizeNonNegativeInteger(boxCounts.AR, 4);
+  const anniversaryCount = normalizeNonNegativeInteger(
+    boxCounts["30th"],
+    2
+  );
+  const highHitCount = normalizeNonNegativeInteger(
+    boxCounts.highHit,
+    1
+  );
+
+  const pools = {
+    normal: cards.filter(card => card.rarity === "H"),
+    rr: cards.filter(card => card.rarity === "RR"),
+    pikachu: cards.filter(card => card.rarity === "PIKACHU"),
+    ar: cards.filter(card => card.rarity === "AR"),
+    anniversary: cards.filter(card => card.rarity === "30th"),
+    sar: cards.filter(card => card.rarity === "SAR"),
+    fur: cards.filter(card => card.rarity === "FUR"),
+    rgb: cards.filter(card => card.rarity === "RGB"),
+    energy: cards.filter(card => card.rarity === "ENERGY")
+  };
+
+  for (const [poolName, pool] of Object.entries(pools)) {
+    if (poolName === "rgb" && rule.rgbEnabled !== true) {
+      continue;
+    }
+
+    if (pool.length === 0) {
+      throw new Error(
+        `30th CELEBRATIONの${poolName}カードが見つかりません。`
+      );
+    }
+  }
+
+  const hitCards = [
+    ...pickManyUniqueCards(pools.rr, rrCount),
+    ...pickManyUniqueCards(pools.ar, arCount),
+    ...pickManyUniqueCards(pools.anniversary, anniversaryCount)
+  ];
+  const highHitPool = [...pools.sar, ...pools.fur];
+  const highHitWeights = rule.highHitRarityWeights || {
+    SAR: 90,
+    FUR: 10
+  };
+  const blockedHighHitIds = new Set();
+
+  for (let index = 0; index < highHitCount; index += 1) {
+    const availableHighHits = highHitPool.filter(card => {
+      return !blockedHighHitIds.has(getCardId(card));
+    });
+    const selectedRarity = pickCelebrationWeightedRarity(
+      availableHighHits,
+      highHitWeights
+    );
+    const selectedCard = pickUniqueCard(
+      availableHighHits.filter(card => card.rarity === selectedRarity),
+      blockedHighHitIds
+    );
+
+    if (!selectedCard) {
+      throw new Error(
+        "30th CELEBRATIONのSAR/FUR抽選候補が不足しています。"
+      );
+    }
+
+    hitCards.push(selectedCard);
+    blockedHighHitIds.add(getCardId(selectedCard));
+  }
+
+  if (shouldIncludeCelebrationRgb(rule)) {
+    const rgbCard = pickCelebrationRgbCard(
+      pools.rgb,
+      rule.rgbColorWeights || {
+        red: 1,
+        green: 1,
+        blue: 1
+      }
+    );
+
+    if (!rgbCard) {
+      throw new Error(
+        "30th CELEBRATIONのRGBミュウ抽選候補が不足しています。"
+      );
+    }
+
+    // RGBは独立した当たり枠として通常H 1枚を置き換える。
+    // SAR/FUR枠は維持し、同一パックに複数の当たりを入れない。
+    hitCards.push(rgbCard);
+  }
+
+  if (hitCards.length > packsPerBox) {
+    throw new Error(
+      "30th CELEBRATIONの当たり枠数がBOXのパック数を超えています。"
+    );
+  }
+
+  const hitAssignments = assignCardsToRandomPacks(
+    shuffleArray(hitCards),
+    packsPerBox
+  );
+  const packs = [];
+
+  for (let packIndex = 0; packIndex < packsPerBox; packIndex += 1) {
+    const packCards = [
+      pickRandom(pools.pikachu),
+      pickRandom(pools.energy)
+    ];
+    const hitCard = hitAssignments.get(packIndex);
+
+    if (hitCard) {
+      packCards.push(hitCard);
+    }
+
+    const targetCardCount = randomSlotsPerPack + 2;
+
+    while (packCards.length < targetCardCount) {
+      const usedIds = new Set(packCards.map(card => getCardId(card)));
+      const normalCard = pickUniqueCard(pools.normal, usedIds);
+
+      if (!normalCard) {
+        throw new Error(
+          "30th CELEBRATIONの通常カード候補が不足しています。"
+        );
+      }
+
+      packCards.push(normalCard);
+    }
+
+    packs.push({
+      packNo: packIndex + 1,
+      cards: shuffleArray(packCards)
+    });
+  }
+
+  return packs;
+}
+
+function shouldIncludeCelebrationRgb(rule) {
+  if (rule.rgbEnabled !== true) {
+    return false;
+  }
+
+  const rate = rule.rgbBoxRate || {};
+  const numerator = Number(rate.numerator);
+  const denominator = Number(rate.denominator);
+
+  if (
+    !Number.isFinite(numerator) ||
+    !Number.isFinite(denominator) ||
+    numerator <= 0 ||
+    denominator <= 0
+  ) {
+    return false;
+  }
+
+  return Math.random() < Math.min(1, numerator / denominator);
+}
+
+function pickCelebrationRgbCard(cards, colorWeights) {
+  const availableColors = new Set(
+    cards.map(card => card.rgbColor).filter(Boolean)
+  );
+  const weightedColors = Object.entries(colorWeights)
+    .map(([color, weight]) => ({
+      color,
+      weight: Number(weight)
+    }))
+    .filter(item => {
+      return (
+        availableColors.has(item.color) &&
+        Number.isFinite(item.weight) &&
+        item.weight > 0
+      );
+    });
+
+  if (weightedColors.length === 0) {
+    return null;
+  }
+
+  const totalWeight = weightedColors.reduce((sum, item) => {
+    return sum + item.weight;
+  }, 0);
+  let randomValue = Math.random() * totalWeight;
+  let selectedColor = weightedColors[weightedColors.length - 1].color;
+
+  for (const item of weightedColors) {
+    randomValue -= item.weight;
+
+    if (randomValue <= 0) {
+      selectedColor = item.color;
+      break;
+    }
+  }
+
+  return pickRandom(
+    cards.filter(card => card.rgbColor === selectedColor)
+  );
+}
+
+function pickCelebrationWeightedRarity(cards, rarityWeights) {
+  const availableRarities = new Set(
+    cards.map(card => card.rarity)
+  );
+  const weightedItems = Object.entries(rarityWeights)
+    .map(([rarity, weight]) => ({
+      rarity,
+      weight: Number(weight)
+    }))
+    .filter(item => {
+      return (
+        availableRarities.has(item.rarity) &&
+        Number.isFinite(item.weight) &&
+        item.weight > 0
+      );
+    });
+
+  if (weightedItems.length === 0) {
+    return null;
+  }
+
+  const totalWeight = weightedItems.reduce((sum, item) => {
+    return sum + item.weight;
+  }, 0);
+  let randomValue = Math.random() * totalWeight;
+
+  for (const item of weightedItems) {
+    randomValue -= item.weight;
+
+    if (randomValue <= 0) {
+      return item.rarity;
+    }
+  }
+
+  return weightedItems[weightedItems.length - 1].rarity;
 }
 
 function generateSingleBox(cards, packRule) {

@@ -22,11 +22,16 @@ const PLACEHOLDER_CARD_IMAGE_PATH =
 const RARITY_FILTER_ORDER = [
   "C",
   "U",
+  "H",
   "R",
   "RR",
+  "PIKACHU",
   "AR",
+  "30th",
   "SR",
   "SAR",
+  "FUR",
+  "RGB",
   "UR",
   "MUR",
   "BWR",
@@ -35,6 +40,7 @@ const RARITY_FILTER_ORDER = [
   "MM",
   "ACE",
   "HR",
+  "ENERGY",
   "不明"
 ];
 
@@ -60,8 +66,11 @@ const TRAINER_TYPE_ORDER = [
 
 const EXPORT_HIGH_RARITIES = new Set([
   "AR",
+  "30th",
   "SR",
   "SAR",
+  "FUR",
+  "RGB",
   "UR",
   "MUR",
   "BWR",
@@ -265,8 +274,11 @@ async function selectSet(setCode) {
 
     enableOpenButtons();
 
+    const packsPerBox = getPacksPerBox(packRule);
+
     open15Button.onclick = () => handleOpenPacks(15);
-    open30Button.onclick = () => handleOpenPacks(30);
+    open30Button.onclick = () => handleOpenPacks(packsPerBox);
+    open30Button.textContent = `1BOX（${packsPerBox}パック）開封`;
 
     // 読み込み成功時はステータス欄を完全に消す
     hideStatus();
@@ -392,7 +404,7 @@ async function playOpeningAnimation(packCount) {
     return;
   }
 
-  const isBoxOpening = packCount >= 30;
+  const isBoxOpening = packCount === getPacksPerBox(packRule);
 
   if (openingOverlayTitle) {
     openingOverlayTitle.textContent = isBoxOpening
@@ -421,6 +433,16 @@ async function playOpeningAnimation(packCount) {
   openingOverlay.classList.add("hidden");
   openingOverlay.setAttribute("aria-hidden", "true");
   document.body.classList.remove("modal-open");
+}
+
+function getPacksPerBox(rule) {
+  const packsPerBox = Number(
+    rule?.packsPerBox ?? rule?.boxRules?.packsPerBox ?? 30
+  );
+
+  return Number.isFinite(packsPerBox) && packsPerBox > 0
+    ? Math.floor(packsPerBox)
+    : 30;
 }
 
 function updateDisplayedResults() {
@@ -638,35 +660,15 @@ function displaySummary(summary) {
 
   // カード番号が分母より大きいカード。
   // AR、SR、SAR、MURなどのシークレット番号カードが該当する。
-  const secretNumberedCards = summary
-    .filter(item => isSecretNumberedCard(item.card))
-    .sort((a, b) => {
-      const cardNoDiff =
-        getCardNoNumber(b.card) - getCardNoNumber(a.card);
-
-      if (cardNoDiff !== 0) {
-        return cardNoDiff;
-      }
-
-      return String(a.card.name || "")
-        .localeCompare(String(b.card.name || ""), "ja");
-    });
+  const secretNumberedCards = sortSecretSummaryItems(
+    summary.filter(item => isSecretNumberedCard(item.card))
+  );
 
   // 通常のカード番号。
   // カード番号の小さい順に並べる。
-  const regularNumberedCards = summary
-    .filter(item => !isSecretNumberedCard(item.card))
-    .sort((a, b) => {
-      const cardNoDiff =
-        getCardNoNumber(a.card) - getCardNoNumber(b.card);
-
-      if (cardNoDiff !== 0) {
-        return cardNoDiff;
-      }
-
-      return String(a.card.name || "")
-        .localeCompare(String(b.card.name || ""), "ja");
-    });
+  const regularNumberedCards = sortRegularSummaryItems(
+    summary.filter(item => !isSecretNumberedCard(item.card))
+  );
 
   const secretHtml = secretNumberedCards.length > 0
     ? `
@@ -980,40 +982,70 @@ async function exportOpenedCardsImage({
 }
 
 function sortSummaryItemsForExport(summaryItems) {
-  const secretItems = summaryItems
-    .filter(item => isSecretNumberedCard(item.card))
-    .sort((a, b) => {
-      const numberDiff =
-        getCardNoNumber(b.card) -
-        getCardNoNumber(a.card);
-
-      if (numberDiff !== 0) {
-        return numberDiff;
-      }
-
-      return String(a.card.name || "")
-        .localeCompare(String(b.card.name || ""), "ja");
-    });
-
-  const regularItems = summaryItems
-    .filter(item => !isSecretNumberedCard(item.card))
-    .sort((a, b) => {
-      const numberDiff =
-        getCardNoNumber(a.card) -
-        getCardNoNumber(b.card);
-
-      if (numberDiff !== 0) {
-        return numberDiff;
-      }
-
-      return String(a.card.name || "")
-        .localeCompare(String(b.card.name || ""), "ja");
-    });
+  const secretItems = sortSecretSummaryItems(
+    summaryItems.filter(item => isSecretNumberedCard(item.card))
+  );
+  const regularItems = sortRegularSummaryItems(
+    summaryItems.filter(item => !isSecretNumberedCard(item.card))
+  );
 
   return [
     ...secretItems,
     ...regularItems
   ];
+}
+
+function sortSecretSummaryItems(summaryItems) {
+  return [...summaryItems].sort((a, b) => {
+    return compareSummaryItemsByCardNumber(a, b, -1);
+  });
+}
+
+function sortRegularSummaryItems(summaryItems) {
+  return [...summaryItems].sort((a, b) => {
+    const groupDiff =
+      getRegularSummaryDisplayGroup(a.card) -
+      getRegularSummaryDisplayGroup(b.card);
+
+    if (groupDiff !== 0) {
+      return groupDiff;
+    }
+
+    return compareSummaryItemsByCardNumber(a, b, 1);
+  });
+}
+
+function getRegularSummaryDisplayGroup(card) {
+  if (card?.category === "trainer") {
+    return 1;
+  }
+
+  if (
+    card?.category === "energy" &&
+    String(card.rarity || "") !== "SR"
+  ) {
+    return 2;
+  }
+
+  return 0;
+}
+
+function compareSummaryItemsByCardNumber(a, b, direction) {
+  const aCardNo = getCardNoNumber(a.card);
+  const bCardNo = getCardNoNumber(b.card);
+  const aHasCardNo = Number.isFinite(aCardNo);
+  const bHasCardNo = Number.isFinite(bCardNo);
+
+  if (aHasCardNo && bHasCardNo && aCardNo !== bCardNo) {
+    return direction * (aCardNo - bCardNo);
+  }
+
+  if (aHasCardNo !== bHasCardNo) {
+    return aHasCardNo ? -1 : 1;
+  }
+
+  return String(a.card.name || "")
+    .localeCompare(String(b.card.name || ""), "ja");
 }
 
 function isExportHighRareCard(card) {
